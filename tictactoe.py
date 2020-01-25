@@ -9,7 +9,9 @@ Some Goals:
     Pending:
     1) visual interface? (use pygame?)
     2) basic ai (probably just takes a random legal move)
-    
+    3) use ML (even better, autoML) to find optimal strategy!!!
+
+
 Enjoy!!
 
 '''
