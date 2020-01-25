@@ -1,7 +1,5 @@
 import sys
 
-
-
 '''Let's make tic tac toe!!
 
 Some Goals:
