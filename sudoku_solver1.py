@@ -1,3 +1,5 @@
+import time
+
 """
 Sudoku Solver by Evan Freeman
 Brute force-ish
@@ -59,6 +61,8 @@ To do:
         -Still pretty brute force
 
 """
+
+start_time = time.time()
 
 class Grid:
 
@@ -133,6 +137,7 @@ def check(thing):
         return False
 
 #Here is the solution function. Takes us from the original puzzle to the solution.
+#
 def solve(puzzle):
     sudoku = Grid(puzzle)
 
@@ -191,7 +196,8 @@ def solve(puzzle):
     print(solution)
     print('\n')
     print(f'This sudoku was solved in {count} loops.')
-
+    print('\n')
+    print("--- %s seconds ---" % (time.time() - start_time))
     return solution
 
 
