@@ -51,6 +51,450 @@ def check(thing):
     else:
         return False
 
+def box_num(i, j):
+    """
+    # Find what number box a cell is in (0 - 8)
+
+    Parameters
+    ----------
+    i : TYPE
+        DESCRIPTION.
+    j : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    int
+        DESCRIPTION.
+
+    """
+    
+    #box x coordinate
+    x = i // 3 * 3
+    #box y coordinate
+    y = j // 3 * 3
+    
+    if (x, y) == (0, 0):
+        return 0
+    elif (x, y) == (0, 3):
+        return 1
+    elif (x, y) == (0, 6):
+        return 2
+    elif (x, y) == (3, 0):
+        return 3
+    elif (x, y) == (3, 3):
+        return 4
+    elif (x, y) == (3, 6):
+        return 5
+    elif (x, y) == (6, 0):
+        return 6
+    elif (x, y) == (6, 3):
+        return 7
+    elif (x, y) == (6, 6):
+        return 8
+
+# Updates all blanks with new information in the sudoku
+def update_blanks(blanks, sudoku):
+    for blank in blanks:
+        for poss in blank[3][:]:
+            if poss in sudoku.column(blank[1], blank[2]) or poss in sudoku.row(blank[1], blank[2]) or poss in sudoku.box(blank[1], blank[2]):
+                blank[3].remove(poss)
+   
+
+# Fill in a blank if there is only a single possibility
+def naked_single(blanks, sudoku):
+    for i in range(len(blanks)):
+        if len(blanks[i][3]) == 1:
+            # Update the puzzle
+            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][3][0]
+            # Delete that entry in the blanks
+            del blanks[i]
+            # Note that progress has been made this loop
+            return True
+    return False
+   
+
+# Fill in when there is only one remaining place for a number in a row, column, or box.
+def hidden_single(blanks):
+    # For each blank, see if it is the only number in it's row, column, or box that could contain a given number
+    # Nuts, maybe I should have attached the possibilites to each cell..., some sort of object
+    
+    #For each blank:
+        #1) for each possiblity
+        #2) look in it's row. Is there any other cell which is blank and has that possibility? If not, fill it in
+        #3) Look in it's column. Is there any other cell which is blank and has that possibility? If not, fill it in
+        #4) Look in it's box. Is there any other cell which is blank and has that possibility? If not, fill it in
+    for blank in blanks:
+        #generate the subset of blanks that are in the same column, row, or box as our current blank
+        
+        #These have the same second coordinate
+        blank_column = [other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank]
+        
+        #These have the same first coordinate
+        blank_row = [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank]
+        
+        #These have the same whole number when divided by 3
+        blank_box = [other_blank for other_blank in blanks if int(other_blank[1])//3 == int(blank[1])//3 and int(other_blank[2])//3 == int(blank[2])//3 and other_blank != blank]
+        
+        #Iterate through each possibility. See if it is the only 
+        other_column_poss = {num for other_poss in blank_column for num in other_poss[3]}
+        other_row_poss = {num for other_poss in blank_row for num in other_poss[3]}
+        other_box_poss = {num for other_poss in blank_box for num in other_poss[3]}
+        
+        for poss in blank[3]:
+            if not poss in other_column_poss or not poss in other_row_poss or not poss in other_box_poss:
+                sudoku.cells[blank[1]][blank[2]] = poss
+                blanks.remove(blank)
+                return True
+    return False
+
+#Just naked doubles
+#THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
+#Probably not a big deal though, and makes the code more readable and the logic easier to write for me
+def naked_double(blanks):     
+    
+    for blank in blanks:
+        #generate the subset of blanks that are in the same column, row, or box as our current blank
+        
+        #These have the same second coordinate
+        blank_column = [other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank]
+        
+        #These have the same first coordinate
+        blank_row = [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank]
+        
+        #These have the same whole number when divided by 3
+        blank_box = [other_blank for other_blank in blanks if int(other_blank[1])//3 == int(blank[1])//3 and int(other_blank[2])//3 == int(blank[2])//3 and other_blank != blank]
+    
+        #See if any other blank in the row, column, or box has identical possiblities, and is length 2. If so, remove from that column, row, or box.
+        for other_blank in blank_column:
+            if other_blank[3] == blank[3] and len(blank[3]) == 2:
+                for other_other_blank in blank_column:
+                    if other_other_blank != other_blank:
+                        for poss in blank[3]:
+                            if poss in other_other_blank[3]:
+                                other_other_blank[3].remove(poss)
+                                return True
+                        
+        for other_blank in blank_row:
+            if other_blank[3] == blank[3] and len(blank[3]) == 2:
+                for other_other_blank in blank_row:
+                    if other_other_blank != other_blank:
+                        for poss in blank[3]:
+                            if poss in other_other_blank[3]:
+                                other_other_blank[3].remove(poss)
+                                return True
+                        
+        for other_blank in blank_box:
+            if other_blank[3] == blank[3] and len(blank[3]) == 2:
+                for other_other_blank in blank_box:
+                    if other_other_blank != other_blank:
+                        for poss in blank[3]:
+                            if poss in other_other_blank[3]:
+                                other_other_blank[3].remove(poss)
+                                return True
+    return False
+    
+    
+    
+    #Naked triples
+    #Recall that a naked triple means 3 in a subsection that all have EXACTLY and only members of a len 3 subset of possibilities
+    #So {1, 2}, {1, 3}, and {2, 3} would form a naked triple
+    #I may assume that there are no naked singles or doubles because of the previous code
+    #Instead of going through each blank and generating 
+    #THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
+    #Probably not a big deal though, and makes the code more readable and the logic easier to write for me
+def naked_triple(blanks):
+    #Let's generate each column, row, and box, but only for blanks
+    #Remember, these are copies, so alter the original items in b???
+    #Just make a list, or maybe a dict
+    
+    
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+    
+    for column in column_blanks:
+        for blank1 in column:
+            if 2 <= len(blank1[3]) <= 3:
+                for blank2 in column:
+                    triple = set(blank1[3] + blank2[3])
+                    if blank2 != blank1 and len(triple) == 3:
+                        for blank3 in column:
+                            if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
+                                for blank4 in column:
+                                    if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
+                                        for poss in triple:
+                                            if poss in blank4[3]:
+                                                blank4[3].remove(poss)
+                                                return True
+    for row in row_blanks:
+        for blank1 in row:
+            if 2 <= len(blank1[3]) <= 3:
+                for blank2 in row:
+                    triple = set(blank1[3] + blank2[3])
+                    if blank2 != blank1 and len(triple) == 3:
+                        for blank3 in row:
+                            if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
+                                for blank4 in row:
+                                    if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
+                                        for poss in triple:
+                                            if poss in blank4[3]:
+                                                blank4[3].remove(poss)
+                                                return True      
+    for box in box_blanks:
+        for blank1 in box:
+            if 2 <= len(blank1[3]) <= 3:
+                for blank2 in box:
+                    triple = set(blank1[3] + blank2[3])
+                    if blank2 != blank1 and len(triple) == 3:
+                        for blank3 in box:
+                            if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
+                                for blank4 in box:
+                                    if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
+                                        for poss in triple:
+                                            if poss in blank4[3]:
+                                                blank4[3].remove(poss)
+                                                return True      
+    return False
+
+
+#Same as naked triple, but with 4
+#Cleaned up the code a bit by using .issubset
+#Need to go back and clean up naked triple
+#Very rare
+def naked_quad(blanks):
+    
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+    
+    for column in column_blanks:
+        all_poss = {x for blank in column for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            subset_quad = [blank for blank in column if set(blank[3]).issubset(set(quad))]
+            if len(subset_quad) == 4:
+                for blank in column:
+                    if not blank in subset_quad:
+                        for poss in blank[3][:]:
+                            if poss in quad:
+                                blank[3].remove(poss)
+                                return True
+    for row in row_blanks:
+        all_poss = {x for blank in row for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            subset_quad = [blank for blank in row if set(blank[3]).issubset(set(quad))]
+            if len(subset_quad) == 4:
+                for blank in row:
+                    if not blank in subset_quad:
+                        for poss in blank[3][:]:
+                            if poss in quad:
+                                blank[3].remove(poss)
+                                return True
+    for box in box_blanks:
+        all_poss = {x for blank in box for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            subset_quad = [blank for blank in box if set(blank[3]).issubset(set(quad))]
+            if len(subset_quad) == 4:
+                for blank in box:
+                    if not blank in subset_quad:
+                        for poss in blank[3][:]:
+                            if poss in quad:
+                                blank[3].remove(poss)
+                                return True
+    return False
+
+
+# Same as hidden_triple, but with 4
+# Very rare
+def hidden_quad(blanks):
+    
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+
+    for column in column_blanks:
+        all_poss = {x for blank in column for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            contain_quad = [blank for blank in column if any([x in blank[3] for x in quad])]
+            if len(contain_quad) == 4:
+                for blank in contain_quad:
+                    for poss in blank[3][:]:
+                        if not poss in quad:
+                            blank[3].remove(poss)                       
+                            return True
+    for row in row_blanks:
+        all_poss = {x for blank in row for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            contain_quad = [blank for blank in row if any([x in blank[3] for x in quad])]
+            if len(contain_quad) == 4:
+                for blank in contain_quad:
+                    for poss in blank[3][:]:
+                        if not poss in quad:
+                            blank[3].remove(poss)                       
+                            return True
+    for box in box_blanks:
+        all_poss = {x for blank in box for x in blank[3]}
+        for quad in it.combinations(all_poss, 4):
+            contain_quad = [blank for blank in box if any([x in blank[3] for x in quad])]
+            if len(contain_quad) == 4:
+                for blank in contain_quad:
+                    for poss in blank[3][:]:
+                        if not poss in quad:
+                            blank[3].remove(poss)                       
+                            return True
+    return False
+                        
+                        
+
+# If a pair of numbers only appears in 2 cells for a given row, column, or box, we should update those cells to only that pair
+# For each row, column, or box, consider each pair of numbers from among the possiblites in that space
+# Yes, we're regenerating these lists of blanks. It's probably not a problem. Probably...
+def hidden_double(blanks):
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+    
+    for column in column_blanks:
+        all_poss = {x for blank in column for x in blank[3]}
+        for double_unsorted in it.combinations(all_poss, 2):
+            double = sorted(list(double_unsorted))
+            contain_double = [blank for blank in column if any([x in blank[3] for x in double])]
+            if len(contain_double) == 2:
+                for blank in contain_double:
+                    if len(blank[3]) > 2:
+                        blank[3] = double
+                        return True
+    for row in row_blanks:
+        all_poss = {x for blank in row for x in blank[3]}
+        for double_unsorted in it.combinations(all_poss, 2):
+            double = sorted(list(double_unsorted))
+            contain_double = [blank for blank in row if any([x in blank[3] for x in double])]
+            if len(contain_double) == 2:
+                for blank in contain_double:
+                    if len(blank[3]) > 2:
+                        blank[3] = double
+                        return True
+    for box in box_blanks:
+        all_poss = {x for blank in box for x in blank[3]}
+        for double_unsorted in it.combinations(all_poss, 2):
+            double = sorted(list(double_unsorted))
+            contain_double = [blank for blank in box if any([x in blank[3] for x in double])]
+            if len(contain_double) == 2:
+                for blank in contain_double:
+                    if len(blank[3]) > 2:
+                        blank[3] = double
+                        return True
+        
+    return False
+        
+        
+        
+        
+# If there's a set of 3 numbers that appear in exactly 3 cells in a given space, reduce the possibilities of those cells to exactly those 3 numbers        
+def hidden_triple(blanks):
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+    
+    for column in column_blanks:
+        all_poss = {x for blank in column for x in blank[3]}
+        for triple in it.combinations(all_poss, 3):
+            contain_triple = [blank for blank in column if any([x in blank[3] for x in triple])]
+            if len(contain_triple) == 3:
+                for blank in contain_triple:
+                    for poss in blank[3][:]:
+                        if not poss in triple:
+                            blank[3].remove(poss)                       
+                            return True
+    for row in row_blanks:
+        all_poss = {x for blank in row for x in blank[3]}
+        for triple in it.combinations(all_poss, 3):
+            contain_triple = [blank for blank in row if any([x in blank[3] for x in triple])]
+            if len(contain_triple) == 3:
+                for blank in contain_triple:
+                    for poss in blank[3][:]:
+                        if not poss in triple:
+                            blank[3].remove(poss)                       
+                            return True
+    for box in box_blanks:
+        all_poss = {x for blank in box for x in blank[3]}
+        for triple in it.combinations(all_poss, 3):
+            contain_triple = [blank for blank in box if any([x in blank[3] for x in triple])]
+            if len(contain_triple) == 3:
+                for blank in contain_triple:
+                    for poss in blank[3][:]:
+                        if not poss in triple:
+                            blank[3].remove(poss)                       
+                            return True
+    return False
+    
+    
+    
+    
+# If all occurences of a number in one region (box, line, or row) intersect with another region (box, line, or row)...
+# ...then remove that number from the second region
+# I believe there is a way to use the same code for each, but for now I'll hand code each of 4 cases:
+# 1 - Box gives info about row
+# 2 - Box gives info about column
+# 3 - Column gives info about box
+# 4 - Row gives info about box
+def reduction(blanks):
+    column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
+    row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
+    box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
+    
+    
+    # Scenario 1 and 2
+    for box in box_blanks:
+        all_poss = {x for blank in box for x in blank[3]}
+        for poss in all_poss:
+            blank_containing_poss = [blank for blank in box if poss in blank[3]]
+            rows_of_these_blanks = {blank[1] for blank in blank_containing_poss}
+            columns_of_these_blanks = {blank[2] for blank in blank_containing_poss}
+            if len(rows_of_these_blanks) == 1:
+                row_num = list(rows_of_these_blanks)[0]
+                for blank in row_blanks[row_num]:
+                    if not blank in box and poss in blank[3]:
+                        blank[3].remove(poss)
+                        return True
+            
+            if len(columns_of_these_blanks) == 1:
+                column_num = list(columns_of_these_blanks)[0]
+                for blank in column_blanks[column_num]:
+                    if not blank in box and poss in blank[3]:
+                        blank[3].remove(poss)
+                        return True
+    
+    # Scenario 3
+    for column in column_blanks:
+        all_poss = {x for blank in column for x in blank[3]}
+        for poss in all_poss:
+            blank_containing_poss = [blank for blank in column if poss in blank[3]]
+            box_of_these_blanks = {box_num(blank[1], blank[2]) for blank in blank_containing_poss}
+            if len(box_of_these_blanks) == 1:
+                this_box_num = list(box_of_these_blanks)[0]
+                for blank in box_blanks[this_box_num]:
+                    if not blank in column and poss in blank[3]:
+                        blank[3].remove(poss)
+                        return True
+                
+    # Scenario 4
+    for row in row_blanks:
+        all_poss = {x for blank in row for x in blank[3]}
+        for poss in all_poss:
+            blank_containing_poss = [blank for blank in row if poss in blank[3]]
+            box_of_these_blanks = {box_num(blank[1], blank[2]) for blank in blank_containing_poss}
+            if len(box_of_these_blanks) == 1:
+                this_box_num = list(box_of_these_blanks)[0]
+                for blank in box_blanks[this_box_num]:
+                    if not blank in row and poss in blank[3]:
+                        blank[3].remove(poss)
+                        return True
+        
+    return False
+
+
+
 
 
 class Grid:
@@ -106,7 +550,6 @@ class Grid:
             for x in self.cells:
                 print(x)
             print('')
-
 
 
 def solve_bf(puzzle):
@@ -210,77 +653,11 @@ def solve_lbf(puzzle):
 
     """
     start_time = time.time()
-    class Grid:
-
-        def __init__(self, string):
-            self.cells = [[x for x in string[0:9]],
-                          [x for x in string[9:18]],
-                          [x for x in string[18:27]],
-                          [x for x in string[27:36]],
-                          [x for x in string[36:45]],
-                          [x for x in string[45:54]],
-                          [x for x in string[54:63]],
-                          [x for x in string[63:72]],
-                          [x for x in string[72:81]]]
-
-
-        # This function outputs the contents of the box containing the cell with coordinates i, j
-        def box(self, i, j):
-            #let's find the coordinate of the upper left cell in the box
-            #We'll calculate the rest of the cell from there
-
-            #box x coordinate
-            x = i // 3 * 3
-            #box y coordinate
-            y = j // 3 * 3
-
-            box = [self.cells[a][b] for a in [x, x+1, x+2] for b in [y, y+1, y+2]]
-            return box
-
-
-        #This function outputs the contents of the row containing the cell with coordinates i, j
-        def row(self, i, j):
-            row = [self.cells[i][y] for y in range(9)]
-            return row
-
-
-        #This function outputs the contents of the column containing the cell with coordinates i, j
-        def column(self, i, j):
-            column = [self.cells[x][j] for x in range(9)]
-            return column
-
-
-        #Displays the puzzle, as a single block of strings
-        def display(self):
-            print('')
-            for x in self.cells:
-                print(''.join(x))
-            print('')
-
-
-        #Displays the puzzle, broken up into lists
-        def display_grid(self):
-            print('')
-            for x in self.cells:
-                print(x)
-            print('')
+    
      
-        
-        
 #Checks a given input (box, row, or column) for duplicates
 #Could be any list really, but will only check for duplicates in 1-9 (As strings)
 #Should this be part of the sudoku object? Doesn't act on the object, so I don't think so
-    def check(thing):
-        #First, remove any empty spaces
-        clean_thing = []
-        for x in thing:
-            if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                clean_thing.append(x)
-        #Now check for duplicates
-        if len(clean_thing) == len(set(clean_thing)):
-            return True
-        else:
-            return False
 
 #Here is the solution function. Takes us from the original puzzle to the solution.
 
@@ -396,108 +773,10 @@ def solve(puzzle):
 
     """
     
-    
-    
     start_time = time.time()
-    class Grid:
-
-        def __init__(self, string):
-            self.cells = [[x for x in string[0:9]],
-                          [x for x in string[9:18]],
-                          [x for x in string[18:27]],
-                          [x for x in string[27:36]],
-                          [x for x in string[36:45]],
-                          [x for x in string[45:54]],
-                          [x for x in string[54:63]],
-                          [x for x in string[63:72]],
-                          [x for x in string[72:81]]]
-
-
-        # This function outputs the contents of the box containing the cell with coordinates i, j
-        def box(self, i, j):
-            #let's find the coordinate of the upper left cell in the box
-            #We'll calculate the rest of the cell from there
-
-            #box x coordinate
-            x = i // 3 * 3
-            #box y coordinate
-            y = j // 3 * 3
-
-            box = [self.cells[a][b] for a in [x, x+1, x+2] for b in [y, y+1, y+2]]
-            return box
-
-
-        #This function outputs the contents of the row containing the cell with coordinates i, j
-        def row(self, i, j):
-            row = [self.cells[i][y] for y in range(9)]
-            return row
-
-
-        #This function outputs the contents of the column containing the cell with coordinates i, j
-        def column(self, i, j):
-            column = [self.cells[x][j] for x in range(9)]
-            return column
-
-
-        #Displays the puzzle, as a single block of strings
-        def display(self):
-            print('')
-            for x in self.cells:
-                print(''.join(x))
-            print('')
-
-
-        #Displays the puzzle, broken up into lists
-        def display_grid(self):
-            print('')
-            for x in self.cells:
-                print(x)
-            print('')
-     
+    
         
-        
-#Checks a given input (box, row, or column) for duplicates
-#Could be any list really, but will only check for duplicates in 1-9 (As strings)
-#Should this be part of the sudoku object? Doesn't act on the object, so I don't think so
-    def check(thing):
-        #First, remove any empty spaces
-        clean_thing = []
-        for x in thing:
-            if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                clean_thing.append(x)
-        #Now check for duplicates
-        if len(clean_thing) == len(set(clean_thing)):
-            return True
-        else:
-            return False
-        
-        
-        
-    # Find what number box a cell is in (0 - 8)
-    def box_num(i, j):
-        #box x coordinate
-        x = i // 3 * 3
-        #box y coordinate
-        y = j // 3 * 3
-        
-        if (x, y) == (0, 0):
-            return 0
-        elif (x, y) == (0, 3):
-            return 1
-        elif (x, y) == (0, 6):
-            return 2
-        elif (x, y) == (3, 0):
-            return 3
-        elif (x, y) == (3, 3):
-            return 4
-        elif (x, y) == (3, 6):
-            return 5
-        elif (x, y) == (6, 0):
-            return 6
-        elif (x, y) == (6, 3):
-            return 7
-        elif (x, y) == (6, 6):
-            return 8
+
 
 #Here is the solution function. Takes us from the original puzzle to the solution.
 
@@ -524,405 +803,7 @@ def solve(puzzle):
                 blanks.append([sudoku.cells[i][j], i, j, real_poss])
 
    
-    # Updates all blanks with new information in the sudoku
-    def update_blanks():
-        for blank in blanks:
-            for poss in blank[3][:]:
-                if poss in sudoku.column(blank[1], blank[2]) or poss in sudoku.row(blank[1], blank[2]) or poss in sudoku.box(blank[1], blank[2]):
-                    blank[3].remove(poss)
-   
-
-    # Fill in a blank if there is only a single possibility
-    def naked_single():
-        for i in range(len(blanks)):
-            if len(blanks[i][3]) == 1:
-                # Update the puzzle
-                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][3][0]
-                # Delete that entry in the blanks
-                del blanks[i]
-                # Note that progress has been made this loop
-                return True
-        return False
-   
-
-    # Fill in when there is only one remaining place for a number in a row, column, or box.
-    def hidden_single():
-        # For each blank, see if it is the only number in it's row, column, or box that could contain a given number
-        # Nuts, maybe I should have attached the possibilites to each cell..., some sort of object
-        
-        #For each blank:
-            #1) for each possiblity
-            #2) look in it's row. Is there any other cell which is blank and has that possibility? If not, fill it in
-            #3) Look in it's column. Is there any other cell which is blank and has that possibility? If not, fill it in
-            #4) Look in it's box. Is there any other cell which is blank and has that possibility? If not, fill it in
-        for blank in blanks:
-            #generate the subset of blanks that are in the same column, row, or box as our current blank
-            
-            #These have the same second coordinate
-            blank_column = [other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank]
-            
-            #These have the same first coordinate
-            blank_row = [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank]
-            
-            #These have the same whole number when divided by 3
-            blank_box = [other_blank for other_blank in blanks if int(other_blank[1])//3 == int(blank[1])//3 and int(other_blank[2])//3 == int(blank[2])//3 and other_blank != blank]
-            
-            #Iterate through each possibility. See if it is the only 
-            other_column_poss = {num for other_poss in blank_column for num in other_poss[3]}
-            other_row_poss = {num for other_poss in blank_row for num in other_poss[3]}
-            other_box_poss = {num for other_poss in blank_box for num in other_poss[3]}
-            
-            for poss in blank[3]:
-                if not poss in other_column_poss or not poss in other_row_poss or not poss in other_box_poss:
-                    sudoku.cells[blank[1]][blank[2]] = poss
-                    blanks.remove(blank)
-                    return True
-        return False
     
-    #Just naked doubles
-    #THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
-    #Probably not a big deal though, and makes the code more readable and the logic easier to write for me
-    def naked_double():     
-        
-        for blank in blanks:
-            #generate the subset of blanks that are in the same column, row, or box as our current blank
-            
-            #These have the same second coordinate
-            blank_column = [other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank]
-            
-            #These have the same first coordinate
-            blank_row = [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank]
-            
-            #These have the same whole number when divided by 3
-            blank_box = [other_blank for other_blank in blanks if int(other_blank[1])//3 == int(blank[1])//3 and int(other_blank[2])//3 == int(blank[2])//3 and other_blank != blank]
-        
-            #See if any other blank in the row, column, or box has identical possiblities, and is length 2. If so, remove from that column, row, or box.
-            for other_blank in blank_column:
-                if other_blank[3] == blank[3] and len(blank[3]) == 2:
-                    for other_other_blank in blank_column:
-                        if other_other_blank != other_blank:
-                            for poss in blank[3]:
-                                if poss in other_other_blank[3]:
-                                    other_other_blank[3].remove(poss)
-                                    return True
-                            
-            for other_blank in blank_row:
-                if other_blank[3] == blank[3] and len(blank[3]) == 2:
-                    for other_other_blank in blank_row:
-                        if other_other_blank != other_blank:
-                            for poss in blank[3]:
-                                if poss in other_other_blank[3]:
-                                    other_other_blank[3].remove(poss)
-                                    return True
-                            
-            for other_blank in blank_box:
-                if other_blank[3] == blank[3] and len(blank[3]) == 2:
-                    for other_other_blank in blank_box:
-                        if other_other_blank != other_blank:
-                            for poss in blank[3]:
-                                if poss in other_other_blank[3]:
-                                    other_other_blank[3].remove(poss)
-                                    return True
-        return False
-        
-        
-        
-        #Naked triples
-        #Recall that a naked triple means 3 in a subsection that all have EXACTLY and only members of a len 3 subset of possibilities
-        #So {1, 2}, {1, 3}, and {2, 3} would form a naked triple
-        #I may assume that there are no naked singles or doubles because of the previous code
-        #Instead of going through each blank and generating 
-        #THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
-        #Probably not a big deal though, and makes the code more readable and the logic easier to write for me
-    def naked_triple():
-        #Let's generate each column, row, and box, but only for blanks
-        #Remember, these are copies, so alter the original items in b???
-        #Just make a list, or maybe a dict
-        
-        
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-        
-        for column in column_blanks:
-            for blank1 in column:
-                if 2 <= len(blank1[3]) <= 3:
-                    for blank2 in column:
-                        triple = set(blank1[3] + blank2[3])
-                        if blank2 != blank1 and len(triple) == 3:
-                            for blank3 in column:
-                                if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
-                                    for blank4 in column:
-                                        if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
-                                            for poss in triple:
-                                                if poss in blank4[3]:
-                                                    blank4[3].remove(poss)
-                                                    return True
-        for row in row_blanks:
-            for blank1 in row:
-                if 2 <= len(blank1[3]) <= 3:
-                    for blank2 in row:
-                        triple = set(blank1[3] + blank2[3])
-                        if blank2 != blank1 and len(triple) == 3:
-                            for blank3 in row:
-                                if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
-                                    for blank4 in row:
-                                        if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
-                                            for poss in triple:
-                                                if poss in blank4[3]:
-                                                    blank4[3].remove(poss)
-                                                    return True      
-        for box in box_blanks:
-            for blank1 in box:
-                if 2 <= len(blank1[3]) <= 3:
-                    for blank2 in box:
-                        triple = set(blank1[3] + blank2[3])
-                        if blank2 != blank1 and len(triple) == 3:
-                            for blank3 in box:
-                                if blank3 != blank1 and blank3 != blank2 and set(blank3[3]).issubset(triple):
-                                    for blank4 in box:
-                                        if blank4 != blank1 and blank4 != blank2 and blank4 != blank3:
-                                            for poss in triple:
-                                                if poss in blank4[3]:
-                                                    blank4[3].remove(poss)
-                                                    return True      
-        return False
-    
-    
-    #Same as naked triple, but with 4
-    #Cleaned up the code a bit by using .issubset
-    #Need to go back and clean up naked triple
-    #Very rare
-    def naked_quad():
-        
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-        
-        for column in column_blanks:
-            all_poss = {x for blank in column for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                subset_quad = [blank for blank in column if set(blank[3]).issubset(set(quad))]
-                if len(subset_quad) == 4:
-                    for blank in column:
-                        if not blank in subset_quad:
-                            for poss in blank[3][:]:
-                                if poss in quad:
-                                    blank[3].remove(poss)
-                                    return True
-        for row in row_blanks:
-            all_poss = {x for blank in row for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                subset_quad = [blank for blank in row if set(blank[3]).issubset(set(quad))]
-                if len(subset_quad) == 4:
-                    for blank in row:
-                        if not blank in subset_quad:
-                            for poss in blank[3][:]:
-                                if poss in quad:
-                                    blank[3].remove(poss)
-                                    return True
-        for box in box_blanks:
-            all_poss = {x for blank in box for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                subset_quad = [blank for blank in box if set(blank[3]).issubset(set(quad))]
-                if len(subset_quad) == 4:
-                    for blank in box:
-                        if not blank in subset_quad:
-                            for poss in blank[3][:]:
-                                if poss in quad:
-                                    blank[3].remove(poss)
-                                    return True
-        return False
-    
-    
-    # Same as hidden_triple, but with 4
-    # Very rare
-    def hidden_quad():
-        
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-    
-        for column in column_blanks:
-            all_poss = {x for blank in column for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                contain_quad = [blank for blank in column if any([x in blank[3] for x in quad])]
-                if len(contain_quad) == 4:
-                    for blank in contain_quad:
-                        for poss in blank[3][:]:
-                            if not poss in quad:
-                                blank[3].remove(poss)                       
-                                return True
-        for row in row_blanks:
-            all_poss = {x for blank in row for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                contain_quad = [blank for blank in row if any([x in blank[3] for x in quad])]
-                if len(contain_quad) == 4:
-                    for blank in contain_quad:
-                        for poss in blank[3][:]:
-                            if not poss in quad:
-                                blank[3].remove(poss)                       
-                                return True
-        for box in box_blanks:
-            all_poss = {x for blank in box for x in blank[3]}
-            for quad in it.combinations(all_poss, 4):
-                contain_quad = [blank for blank in box if any([x in blank[3] for x in quad])]
-                if len(contain_quad) == 4:
-                    for blank in contain_quad:
-                        for poss in blank[3][:]:
-                            if not poss in quad:
-                                blank[3].remove(poss)                       
-                                return True
-        return False
-                            
-                            
-    
-    # If a pair of numbers only appears in 2 cells for a given row, column, or box, we should update those cells to only that pair
-    # For each row, column, or box, consider each pair of numbers from among the possiblites in that space
-    # Yes, we're regenerating these lists of blanks. It's probably not a problem. Probably...
-    def hidden_double():
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-        
-        for column in column_blanks:
-            all_poss = {x for blank in column for x in blank[3]}
-            for double_unsorted in it.combinations(all_poss, 2):
-                double = sorted(list(double_unsorted))
-                contain_double = [blank for blank in column if any([x in blank[3] for x in double])]
-                if len(contain_double) == 2:
-                    for blank in contain_double:
-                        if len(blank[3]) > 2:
-                            blank[3] = double
-                            return True
-        for row in row_blanks:
-            all_poss = {x for blank in row for x in blank[3]}
-            for double_unsorted in it.combinations(all_poss, 2):
-                double = sorted(list(double_unsorted))
-                contain_double = [blank for blank in row if any([x in blank[3] for x in double])]
-                if len(contain_double) == 2:
-                    for blank in contain_double:
-                        if len(blank[3]) > 2:
-                            blank[3] = double
-                            return True
-        for box in box_blanks:
-            all_poss = {x for blank in box for x in blank[3]}
-            for double_unsorted in it.combinations(all_poss, 2):
-                double = sorted(list(double_unsorted))
-                contain_double = [blank for blank in box if any([x in blank[3] for x in double])]
-                if len(contain_double) == 2:
-                    for blank in contain_double:
-                        if len(blank[3]) > 2:
-                            blank[3] = double
-                            return True
-            
-        return False
-            
-            
-            
-            
-    # If there's a set of 3 numbers that appear in exactly 3 cells in a given space, reduce the possibilities of those cells to exactly those 3 numbers        
-    def hidden_triple():
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-        
-        for column in column_blanks:
-            all_poss = {x for blank in column for x in blank[3]}
-            for triple in it.combinations(all_poss, 3):
-                contain_triple = [blank for blank in column if any([x in blank[3] for x in triple])]
-                if len(contain_triple) == 3:
-                    for blank in contain_triple:
-                        for poss in blank[3][:]:
-                            if not poss in triple:
-                                blank[3].remove(poss)                       
-                                return True
-        for row in row_blanks:
-            all_poss = {x for blank in row for x in blank[3]}
-            for triple in it.combinations(all_poss, 3):
-                contain_triple = [blank for blank in row if any([x in blank[3] for x in triple])]
-                if len(contain_triple) == 3:
-                    for blank in contain_triple:
-                        for poss in blank[3][:]:
-                            if not poss in triple:
-                                blank[3].remove(poss)                       
-                                return True
-        for box in box_blanks:
-            all_poss = {x for blank in box for x in blank[3]}
-            for triple in it.combinations(all_poss, 3):
-                contain_triple = [blank for blank in box if any([x in blank[3] for x in triple])]
-                if len(contain_triple) == 3:
-                    for blank in contain_triple:
-                        for poss in blank[3][:]:
-                            if not poss in triple:
-                                blank[3].remove(poss)                       
-                                return True
-        return False
-        
-        
-        
-        
-    # If all occurences of a number in one region (box, line, or row) intersect with another region (box, line, or row)...
-    # ...then remove that number from the second region
-    # I believe there is a way to use the same code for each, but for now I'll hand code each of 4 cases:
-    # 1 - Box gives info about row
-    # 2 - Box gives info about column
-    # 3 - Column gives info about box
-    # 4 - Row gives info about box
-    def reduction():
-        column_blanks = [[blank for blank in blanks if blank[2] == i] for i in range(9)]
-        row_blanks = [[blank for blank in blanks if blank[1] == i] for i in range(9)]     
-        box_blanks = [[blank for blank in blanks if blank[1] // 3 == i and blank[2] // 3 == j] for i in range(3) for j in range(3)]
-        
-        
-        # Scenario 1 and 2
-        for box in box_blanks:
-            all_poss = {x for blank in box for x in blank[3]}
-            for poss in all_poss:
-                blank_containing_poss = [blank for blank in box if poss in blank[3]]
-                rows_of_these_blanks = {blank[1] for blank in blank_containing_poss}
-                columns_of_these_blanks = {blank[2] for blank in blank_containing_poss}
-                if len(rows_of_these_blanks) == 1:
-                    row_num = list(rows_of_these_blanks)[0]
-                    for blank in row_blanks[row_num]:
-                        if not blank in box and poss in blank[3]:
-                            blank[3].remove(poss)
-                            return True
-                
-                if len(columns_of_these_blanks) == 1:
-                    column_num = list(columns_of_these_blanks)[0]
-                    for blank in column_blanks[column_num]:
-                        if not blank in box and poss in blank[3]:
-                            blank[3].remove(poss)
-                            return True
-        
-        # Scenario 3
-        for column in column_blanks:
-            all_poss = {x for blank in column for x in blank[3]}
-            for poss in all_poss:
-                blank_containing_poss = [blank for blank in column if poss in blank[3]]
-                box_of_these_blanks = {box_num(blank[1], blank[2]) for blank in blank_containing_poss}
-                if len(box_of_these_blanks) == 1:
-                    this_box_num = list(box_of_these_blanks)[0]
-                    for blank in box_blanks[this_box_num]:
-                        if not blank in column and poss in blank[3]:
-                            blank[3].remove(poss)
-                            return True
-                    
-        # Scenario 4
-        for row in row_blanks:
-            all_poss = {x for blank in row for x in blank[3]}
-            for poss in all_poss:
-                blank_containing_poss = [blank for blank in row if poss in blank[3]]
-                box_of_these_blanks = {box_num(blank[1], blank[2]) for blank in blank_containing_poss}
-                if len(box_of_these_blanks) == 1:
-                    this_box_num = list(box_of_these_blanks)[0]
-                    for blank in box_blanks[this_box_num]:
-                        if not blank in row and poss in blank[3]:
-                            blank[3].remove(poss)
-                            return True
-            
-        return False
               
         
         
@@ -953,56 +834,56 @@ def solve(puzzle):
     progress = True
     while progress == True:
         
-        prog1 = naked_single()
-        update_blanks()        
+        prog1 = naked_single(blanks, sudoku)
+        update_blanks(blanks, sudoku)        
         progress = prog1
         ns_count += prog1
         
         if progress == False:
-            prog2 = hidden_single()
-            update_blanks()        
+            prog2 = hidden_single(blanks)
+            update_blanks(blanks, sudoku)    
             progress = progress or prog2
             hs_count += prog2
 
             if progress == False:
-                prog3 = naked_double()
-                update_blanks()
+                prog3 = naked_double(blanks)
+                update_blanks(blanks, sudoku) 
                 progress = progress or prog3
                 nd_count += prog3
                 
                 if progress == False:
-                    prog4 = hidden_double()
-                    update_blanks
+                    prog4 = hidden_double(blanks)
+                    update_blanks(blanks, sudoku) 
                     progress = progress or prog4
                     hd_count += prog4
                 
                     if progress == False:
-                        prog5 = naked_triple()
-                        update_blanks
+                        prog5 = naked_triple(blanks)
+                        update_blanks(blanks, sudoku) 
                         progress = progress or prog5
                         nt_count += prog5
                         
                         if progress == False:
-                            prog6 = hidden_triple()
-                            update_blanks
+                            prog6 = hidden_triple(blanks)
+                            update_blanks(blanks, sudoku) 
                             progress = progress or prog6
                             ht_count += prog6
                             
                             if progress == False:
-                                prog7 = naked_quad()
-                                update_blanks
+                                prog7 = naked_quad(blanks)
+                                update_blanks(blanks, sudoku) 
                                 progress = progress or prog7
                                 nq_count += prog7
                                 
                                 if progress == False:
-                                    prog8 = hidden_quad()
-                                    update_blanks
+                                    prog8 = hidden_quad(blanks)
+                                    update_blanks(blanks, sudoku) 
                                     progress = progress or prog8
                                     hq_count += prog8
                                     
                                     if progress == False:
-                                        prog9 = reduction()
-                                        update_blanks
+                                        prog9 = reduction(blanks)
+                                        update_blanks(blanks, sudoku) 
                                         progress = progress or prog9
                                         r_count += prog9
             
@@ -1083,10 +964,28 @@ def solve(puzzle):
     print('\n')
     return solution
 
-# Here's a shortcut to solving with all 3 methods, so I don't have to keep typing it out
-
 def full_solve(puzzle):
+    """
+     Here's a shortcut to solving with all 3 methods, so I don't have to keep typing it out
+
+    Parameters
+    ----------
+    puzzle : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    None.
+
+    """
+    
     solve_bf(puzzle)
     solve_lbf(puzzle)
     solve(puzzle)
+
+
+if __name__ == '__main__':
+    puzzle = '...1.5...14....67..8...24...63.7..1.9.......3.1..9.52...72...8..26....35...4.9...'
+
+    full_solve(puzzle)
 
