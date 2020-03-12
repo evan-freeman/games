@@ -851,26 +851,25 @@ def reduction(blanks):
 # SOLVERS
 # =============================================================================
 
-class solver:
+class Solver:
     
     def __init__(self, puzzle):
-        start_time = time.time()
-        sudoku = Grid(puzzle)
+        self.start_time = time.time()
+        self.sudoku = Grid(puzzle)
 
         print('Here is the brute force solution result:')
         print(puzzle)
         sudoku.display()  
 
-        blanks = generate_blanks(sudoku)
+        self.blanks = generate_blanks(sudoku)
         
-        i = 0    
-        count = 0 
+        self.i = 0    
+        self.count = 0 
         
     def finish_puzzle():
         #Format the solution as a string of 81 characters, like the input
         solution = ''.join([''.join(x) for x in sudoku.cells])
 
-    
         sudoku.display()
         print(solution)
         print('\n')
@@ -883,7 +882,67 @@ class solver:
         print('\n')
         return solution
         
-      
+
+
+class BruteForce(Solver):
+    """
+    Here is my original, mostly brute force, solution
+
+    Parameters
+    ----------
+    puzzle : string
+        81 characters in length. The puzzle. Use periods to as blanks for now.
+
+    Returns
+    -------
+    solution : string
+        81 characters in length. The solved puzzle.
+
+    """
+    def solve_bf(puzzle):
+        # This is the engine that drives the solution 
+        # In each scenario, we update both the list of blanks,
+        # and the sudoku grid itself
+        # Keep going until our index hits the length of blanks
+        # (Which is to say, we're one step beyond)
+        while i != len(blanks):
+            count += 1
+            
+            # Scenario 1: blank number i is still blank. Start with 1
+            if blanks[i][0] not in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                blanks[i][0] = '1'
+                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
+            
+            # Scenario 2: blank number i is at 9. 
+            # So we've already tried all the options
+            # So we need to clear it out and step back.
+            # Also we skip the rest of the loop,
+            # becacuse we don't need to check for consistency
+            # In fact, it would be bad to check for consistency,
+            # as we are guarenteed to trivially be consistent
+            # This would lead to stepping forward, canceling out our step back,
+            # and ending up in an infinite loop  
+            elif blanks[i][0] == '9':
+                blanks[i][0] = '.'
+                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
+                i -= 1
+                continue
+            
+            # Scenario 3: There's some number 1-8 already plugged in.
+            # So we step forward by one.
+            else:
+                blanks[i][0] = str(int(blanks[i][0]) + 1)
+                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
+            
+            # Now we check for consistency.
+            # If we are consistent, we'll step forward.
+            # If not, we'll run through this same spot again.
+            consistent = (check(sudoku.row(blanks[i][1], blanks[i][2])) and
+                          check(sudoku.column(blanks[i][1], blanks[i][2])) and
+                          check(sudoku.box(blanks[i][1], blanks[i][2])))
+            if consistent:
+                i += 1
+                
         
     
 def solve_bf(puzzle):
@@ -976,6 +1035,12 @@ def solve_bf(puzzle):
     print('-'*200)
     print('\n')
     return solution
+
+
+
+
+
+
 
 def solve_lbf(puzzle):
     """
@@ -1082,6 +1147,7 @@ def solve_lbf(puzzle):
     print('-'*200)
     print('\n')
     return solution
+
 
 def solve(puzzle):
     """
@@ -1296,7 +1362,8 @@ def solve(puzzle):
 
 def full_solve(puzzle):
     """
-     Here's a shortcut to solving with all 3 methods, so I don't have to keep typing it out
+     Here's a shortcut to solving with all 3 methods, 
+     so I don't have to keep typing it out
 
     Parameters
     ----------
@@ -1323,4 +1390,4 @@ if __name__ == '__main__':
     # Trickier Example
     # full_solve(puzzle)
     puzzle = '900050000200630005006002000003100070000020900080005000000800100500010004000060008'.replace('0','.')
-    full_solve(puzzle)
+    BruteForce(puzzle).solve_bf()
