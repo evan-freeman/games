@@ -163,10 +163,7 @@ def check(thing):
     """
 
     # First, remove any empty spaces
-    clean_thing = []
-    for x in thing:
-        if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-            clean_thing.append(x)
+    clean_thing = [x for x in thing if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']]
 
     # Now check for duplicates
     if len(clean_thing) == len(set(clean_thing)):
@@ -398,7 +395,7 @@ def naked_double(blanks):
                      other_blank != blank]
 
         # See if any other blank in the row, column, or box 
-        # has identical possiblities, and is length 2. 
+        # has identical possibilities, and is length 2.
         # If so, remove from that column, row, or box.
         for other_blank in blank_column:
             if other_blank[3] == blank[3] and len(blank[3]) == 2:
@@ -862,35 +859,28 @@ class Solver:
 
     def __init__(self, puzzle):
         self.start_time = time.time()
+        self.string = puzzle
         self.sudoku = Grid(puzzle)
-
-        print('Here is the brute force solution result:')
-        print(puzzle)
-        sudoku.display()
-
-        self.blanks = generate_blanks(sudoku)
-
         self.i = 0
         self.count = 0
 
-    def finish_puzzle():
+    def finish_puzzle(self):
         # Format the solution as a string of 81 characters, like the input
-        solution = ''.join([''.join(x) for x in sudoku.cells])
+        solution = ''.join([''.join(x) for x in self.sudoku.cells])
 
-        sudoku.display()
+        self.sudoku.display()
+        self.total_time = time.time() - self.start_time
         print(solution)
         print('\n')
-        print(f'This sudoku was solved in {count} loops.')
+        print(f'This sudoku was solved in {self.count} loops.')
         print('\n')
-        print(f'''--- This program took 
-              {time.time() - start_time} seconds to run. ---''')
+        print(f'''--- This program took {self.total_time} seconds to run. ---''')
         print('\n')
         print('-' * 200)
         print('\n')
         return solution
 
 
-# TODO: Figure out what a subclass is, and fix this
 class BruteForce(Solver):
     """
     Here is my original, mostly brute force, solution
@@ -907,19 +897,33 @@ class BruteForce(Solver):
 
     """
 
-    def solve_bf(puzzle):
+    def __init__(self, puzzle):
+        super().__init__(puzzle)
+        self.blanks = []
+        for i in range(9):
+            for j in range(9):
+                if self.sudoku.cells[i][j] not in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                    # so keep track of the cell we are going to fill, and it's coordinates
+                    self.blanks.append([self.sudoku.cells[i][j], i, j])
+
+    def solve_bf(self):
         # This is the engine that drives the solution 
         # In each scenario, we update both the list of blanks,
         # and the sudoku grid itself
         # Keep going until our index hits the length of blanks
         # (Which is to say, we're one step beyond)
-        while i != len(blanks):
-            count += 1
+
+        print('Here is the brute force solution result:')
+        print(self.string)
+        self.sudoku.display()
+
+        while self.i != len(self.blanks):
+            self.count += 1
 
             # Scenario 1: blank number i is still blank. Start with 1
-            if blanks[i][0] not in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                blanks[i][0] = '1'
-                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
+            if self.blanks[self.i][0] not in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                self.blanks[self.i][0] = '1'
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
 
             # Scenario 2: blank number i is at 9. 
             # So we've already tried all the options
@@ -930,215 +934,92 @@ class BruteForce(Solver):
             # as we are guarenteed to trivially be consistent
             # This would lead to stepping forward, canceling out our step back,
             # and ending up in an infinite loop  
-            elif blanks[i][0] == '9':
-                blanks[i][0] = '.'
-                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-                i -= 1
+            elif self.blanks[self.i][0] == '9':
+                self.blanks[self.i][0] = '.'
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
+                self.i -= 1
                 continue
 
             # Scenario 3: There's some number 1-8 already plugged in.
             # So we step forward by one.
             else:
-                blanks[i][0] = str(int(blanks[i][0]) + 1)
-                sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
+                self.blanks[self.i][0] = str(int(self.blanks[self.i][0]) + 1)
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
 
             # Now we check for consistency.
             # If we are consistent, we'll step forward.
             # If not, we'll run through this same spot again.
-            consistent = (check(sudoku.row(blanks[i][1], blanks[i][2])) and
-                          check(sudoku.column(blanks[i][1], blanks[i][2])) and
-                          check(sudoku.box(blanks[i][1], blanks[i][2])))
-            if consistent:
-                i += 1
+            self.consistent = (check(self.sudoku.row(self.blanks[self.i][1], self.blanks[self.i][2])) and
+                          check(self.sudoku.column(self.blanks[self.i][1], self.blanks[self.i][2])) and
+                          check(self.sudoku.box(self.blanks[self.i][1], self.blanks[self.i][2])))
+            if self.consistent:
+                self.i += 1
+
+        self.finish_puzzle()
 
 
-def solve_bf(puzzle):
-    """
-    Here is my original, mostly brute force, solution
+class LimitedBruteForce(BruteForce):
 
-    Parameters
-    ----------
-    puzzle : string
-        81 characters in length. The puzzle. Use periods to as blanks for now.
+    def __init__(self, puzzle):
+        super().__init__(puzzle)
+        self.blanks = generate_blanks(self.sudoku)
 
-    Returns
-    -------
-    solution : string
-        81 characters in length. The solved puzzle.
+    def solve_lbf(self):
+        print('Here is the limited brute force solution result:')
+        print(self.string)
+        self.sudoku.display()
 
-    """
+        # Step 2: Use (limited) brute force.
+        #     Only brute force through the possibilities.
+        #     3 Possibilities, just like the other one.
+        #         1) Nothing filled in yet -> Use the first possibility
+        #         2) The last possibility filled in -> step back to previous blank
+        #         3) Else -> try the next possibility
+        #     Note that we are guaranteed to have at least 2 possibilities,
+        #     as the previous code would have filled
+        #     In the solution if there were only one possibility
 
-    start_time = time.time()
-    sudoku = Grid(puzzle)
+        while self.i != len(self.blanks):
+            self.count += 1
 
-    print('Here is the brute force solution result:')
-    print(puzzle)
-    sudoku.display()
+            # Scenario 1: blank number i is still blank.
+            # Start with the first possibility
+            if self.blanks[self.i][0] == '.':
+                self.blanks[self.i][0] = self.blanks[self.i][3][0]
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
 
-    # Here we use the same blanks list as the other methods,
-    # but we ignore the possibilities information
-    blanks = generate_blanks(sudoku)
+            # Scenario 2: blank number i is at the last possibility.
+            # So we've already tried all the options
+            # So we need to clear it out and step back.
+            # Also we skip the rest of the loop,
+            # because we don't need to check for consistency
+            # In fact, it would be bad to check for consistency,
+            # as we are guaranteed to trivially be consistent
+            # This would lead to stepping forward, canceling out our step back,
+            # and ending up in an infinite loop
+            elif self.blanks[self.i][0] == self.blanks[self.i][3][-1]:
+                self.blanks[self.i][0] = '.'
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
+                self.i -= 1
+                continue
 
-    # Initialize some variables
-    i = 0
-    count = 0
+            # Scenario 3: There's some non last possibility already plugged in.
+            # So we step forward by one.
+            else:
+                self.blanks[self.i][0] = self.blanks[self.i][3][self.blanks[self.i][3].index(self.blanks[self.i][0]) + 1]
+                # The above code is inefficient, I should store which poss I'm on
+                self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
 
-    # This is the engine that drives the solution 
-    # In each scenario, we update both the list of blanks,
-    # and the sudoku grid itself
-    # Keep going until our index hits the length of blanks
-    # (Which is to say, we're one step beyond)
-    while i != len(blanks):
-        count += 1
+            # Now we check for consistency.
+            # If we are consistent, we'll step forward.
+            # If not, we'll run through this same spot again.
+            self.consistent = (check(self.sudoku.row(self.blanks[self.i][1], self.blanks[self.i][2])) and
+                          check(self.sudoku.column(self.blanks[self.i][1], self.blanks[self.i][2])) and
+                          check(self.sudoku.box(self.blanks[self.i][1], self.blanks[self.i][2])))
+            if self.consistent:
+                self.i += 1
 
-        # Scenario 1: blank number i is still blank. Start with 1
-        if blanks[i][0] not in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-            blanks[i][0] = '1'
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Scenario 2: blank number i is at 9. 
-        # So we've already tried all the options
-        # So we need to clear it out and step back.
-        # Also we skip the rest of the loop,
-        # becacuse we don't need to check for consistency
-        # In fact, it would be bad to check for consistency,
-        # as we are guarenteed to trivially be consistent
-        # This would lead to stepping forward, canceling out our step back,
-        # and ending up in an infinite loop  
-        elif blanks[i][0] == '9':
-            blanks[i][0] = '.'
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-            i -= 1
-            continue
-
-        # Scenario 3: There's some number 1-8 already plugged in.
-        # So we step forward by one.
-        else:
-            blanks[i][0] = str(int(blanks[i][0]) + 1)
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Now we check for consistency.
-        # If we are consistent, we'll step forward.
-        # If not, we'll run through this same spot again.
-        consistent = (check(sudoku.row(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.column(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.box(blanks[i][1], blanks[i][2])))
-        if consistent:
-            i += 1
-
-    # Format the solution as a string of 81 characters, like the input
-    solution = ''.join([''.join(x) for x in sudoku.cells])
-
-    sudoku.display()
-    print(solution)
-    print('\n')
-    print(f'This sudoku was solved in {count} loops.')
-    print('\n')
-    print(f'''--- This program took 
-          {time.time() - start_time} seconds to run. ---''')
-    print('\n')
-    print('-' * 200)
-    print('\n')
-    return solution
-
-
-def solve_lbf(puzzle):
-    """
-    Here is my limited brute force solver, which only brute forces 
-    over the possiblities for each cell, not all of 1-9
-    It cuts the solve time roughly in half
-
-    Parameters
-    ----------
-    puzzle : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-
-    """
-    start_time = time.time()
-
-    # Here is the solution function.
-    # Takes us from the original puzzle to the solution.
-
-    sudoku = Grid(puzzle)
-
-    print('Here is the less brute force solution result:')
-    print(puzzle)
-    sudoku.display()
-
-    blanks = generate_blanks(sudoku)
-
-    # Step 2: Finish with brute force, if needed.
-    #     Only brute force through the possibilites, though.
-    #     3 Possibilities, just like the other one.
-    #         1) Nothing filled in yet -> Use the first possibility
-    #         2) The last possibility filled in -> step back to previous blank
-    #         3) Else -> try the next possibility
-    #     Note that we are guarenteed to have at least 2 possibilities, 
-    #     as the previous code would have filled
-    #     In the solution if there were only one possibility
-
-    i = 0
-    count = 0
-
-    while i != len(blanks):
-        count += 1
-
-        # Scenario 1: blank number i is still blank. 
-        # Start with the first possibility
-        if blanks[i][0] == '.':
-            blanks[i][0] = blanks[i][3][0]
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Scenario 2: blank number i is at the last possibility.
-        # So we've already tried all the options
-        # So we need to clear it out and step back.
-        # Also we skip the rest of the loop, 
-        # becacuse we don't need to check for consistency
-        # In fact, it would be bad to check for consistency, 
-        # as we are guarenteed to trivially be consistent
-        # This would lead to stepping forward, canceling out our step back, 
-        # and ending up in an infinite loop
-        elif blanks[i][0] == blanks[i][3][-1]:
-            blanks[i][0] = '.'
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-            i -= 1
-            continue
-
-        # Scenario 3: There's some non last possibility already plugged in. 
-        # So we step forward by one.
-        else:
-            blanks[i][0] = blanks[i][3][blanks[i][3].index(blanks[i][0]) + 1]
-            # The above code is inefficient, I should store which poss I'm on
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Now we check for consistency. 
-        # If we are consistent, we'll step forward.
-        # If not, we'll run through this same spot again.
-        consistent = (check(sudoku.row(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.column(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.box(blanks[i][1], blanks[i][2])))
-        if consistent:
-            i += 1
-
-    # Format the solution as a string of 81 characters, like the input
-    solution = ''.join([''.join(x) for x in sudoku.cells])
-
-    sudoku.display()
-    print(solution)
-    print('\n')
-    print(f'This sudoku was solved in {count} loops.')
-    print('\n')
-    print(f'''--- This program took
-           {time.time() - start_time} seconds to run. ---''')
-    print('\n')
-    print('-' * 200)
-    print('\n')
-    return solution
+        self.finish_puzzle()
 
 
 def solve(puzzle):
