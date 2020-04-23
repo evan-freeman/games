@@ -863,6 +863,12 @@ class Solver:
         self.sudoku = Grid(puzzle)
         self.i = 0
         self.count = 0
+        self.type = 'None'
+
+    def begin_puzzle(self):
+        print(f'Here is the {self.type} solution result:')
+        print(self.string)
+        self.sudoku.display()
 
     def finish_puzzle(self):
         # Format the solution as a string of 81 characters, like the input
@@ -872,7 +878,7 @@ class Solver:
         self.total_time = time.time() - self.start_time
         print(solution)
         print('\n')
-        print(f'This sudoku was solved in {self.count} loops.')
+        print(f'This sudoku was solved in {self.count} brute force loops.')
         print('\n')
         print(f'''--- This program took {self.total_time} seconds to run. ---''')
         print('\n')
@@ -899,6 +905,7 @@ class BruteForce(Solver):
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
+        self.type = 'BruteForce'
         self.blanks = []
         for i in range(9):
             for j in range(9):
@@ -913,9 +920,7 @@ class BruteForce(Solver):
         # Keep going until our index hits the length of blanks
         # (Which is to say, we're one step beyond)
 
-        print('Here is the brute force solution result:')
-        print(self.string)
-        self.sudoku.display()
+        self.begin_puzzle()
 
         while self.i != len(self.blanks):
             self.count += 1
@@ -962,13 +967,10 @@ class LimitedBruteForce(BruteForce):
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
+        self.type = 'LimitedBruteForce'
         self.blanks = generate_blanks(self.sudoku)
 
     def solve_lbf(self):
-        print('Here is the limited brute force solution result:')
-        print(self.string)
-        self.sudoku.display()
-
         # Step 2: Use (limited) brute force.
         #     Only brute force through the possibilities.
         #     3 Possibilities, just like the other one.
@@ -1022,201 +1024,123 @@ class LimitedBruteForce(BruteForce):
         self.finish_puzzle()
 
 
-def solve(puzzle):
-    """
-    Here is my updated solver
-    
-    Current Techniques:  
+class Solve(LimitedBruteForce):
 
-1. Naked Singles
-2. Hidden Singles
-3. Naked Doubles
-4. Hidden Doubles
-5. Naked Triples
-6. Naked Quads
-7. Hidden Quads
-8. Pointing Pairs and Box Line Reduction. 
-    I've grouped these together into 'reduction' so it'll be a bit faster.
-    but I'd like to split them out later
-9. Finish with limited brute force if necessary
+    def __init__(self, puzzle):
+        super().__init__(puzzle)
+        self.r_count = 0
+        self.hq_count = 0
+        self.nq_count = 0
+        self.ht_count = 0
+        self.nt_count = 0
+        self.hd_count = 0
+        self.nd_count = 0
+        self.hs_count = 0
+        self.ns_count = 0
+        self.type = 'Solve'
 
-    Parameters
-    ----------
-    puzzle : TYPE
-        DESCRIPTION.
+    def solve(self):
+        """
+        Here is my updated solver
 
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
+        Current Techniques:
 
-    """
+    1. Naked Singles
+    2. Hidden Singles
+    3. Naked Doubles
+    4. Hidden Doubles
+    5. Naked Triples
+    6. Naked Quads
+    7. Hidden Quads
+    8. Pointing Pairs and Box Line Reduction.
+        I've grouped these together into 'reduction' so it'll be a bit faster.
+        but I'd like to split them out later
+    9. Finish with limited brute force if necessary
 
-    start_time = time.time()
+        Parameters
+        ----------
+        puzzle : TYPE
+            DESCRIPTION.
 
-    # Here is the solution function.
-    # Takes us from the original puzzle to the solution.
+        Returns
+        -------
+        TYPE
+            DESCRIPTION.
 
-    sudoku = Grid(puzzle)
+        """
 
-    print('Here is the mostly not brute force solution result:')
-    print(puzzle)
-    sudoku.display()
+        self.begin_puzzle()
 
-    blanks = generate_blanks(sudoku)
+        self.progress = True
+        while self.progress:
 
-    # Step 2: Loop through basic strategies:
-    # Hidden and Naked Singles
-    # Now with naked doubles, triples, and quads!
-    # Maybe even
-    # When a blank is solved in this way, remove it from the list of blanks
-    # Make sure to update each cell's possibilities as you go
-    # Don't do more advanced strategies if you don't have to
-    # I can probably remove some of the update blanks steps
+            self.prog1 = naked_single(self.blanks, self.sudoku)
+            update_blanks(self.blanks, self.sudoku)
+            self.progress = self.prog1
+            self.ns_count += self.prog1
 
-    ns_count = 0
-    hs_count = 0
-    nd_count = 0
-    hd_count = 0
-    nt_count = 0
-    ht_count = 0
-    nq_count = 0
-    hq_count = 0
-    r_count = 0
+            if self.progress == False:
+                self.prog2 = hidden_single(self.blanks, self.sudoku)
+                update_blanks(self.blanks, self.sudoku)
+                self.progress = self.progress or self.prog2
+                self.hs_count += self.prog2
 
-    progress = True
-    while progress == True:
+                if self.progress == False:
+                    self.prog3 = naked_double(self.blanks)
+                    update_blanks(self.blanks, self.sudoku)
+                    self.progress = self.progress or self.prog3
+                    self.nd_count += self.prog3
 
-        prog1 = naked_single(blanks, sudoku)
-        update_blanks(blanks, sudoku)
-        progress = prog1
-        ns_count += prog1
+                    if self.progress == False:
+                        self.prog4 = hidden_double(self.blanks)
+                        update_blanks(self.blanks, self.sudoku)
+                        progress = self.progress or self.prog4
+                        self.hd_count += self.prog4
 
-        if progress == False:
-            prog2 = hidden_single(blanks, sudoku)
-            update_blanks(blanks, sudoku)
-            progress = progress or prog2
-            hs_count += prog2
+                        if self.progress == False:
+                            self.prog5 = naked_triple(self.blanks)
+                            update_blanks(self.blanks, self.sudoku)
+                            self.progress = self.progress or self.prog5
+                            self.nt_count += self.prog5
 
-            if progress == False:
-                prog3 = naked_double(blanks)
-                update_blanks(blanks, sudoku)
-                progress = progress or prog3
-                nd_count += prog3
+                            if self.progress == False:
+                                self.prog6 = hidden_triple(self.blanks)
+                                update_blanks(self.blanks, self.sudoku)
+                                self.progress = self.progress or self.prog6
+                                self.ht_count += self.prog6
 
-                if progress == False:
-                    prog4 = hidden_double(blanks)
-                    update_blanks(blanks, sudoku)
-                    progress = progress or prog4
-                    hd_count += prog4
+                                if self.progress == False:
+                                    self.prog7 = naked_quad(self.blanks)
+                                    update_blanks(self.blanks, self.sudoku)
+                                    self.progress = self.progress or self.prog7
+                                    self.nq_count += self.prog7
 
-                    if progress == False:
-                        prog5 = naked_triple(blanks)
-                        update_blanks(blanks, sudoku)
-                        progress = progress or prog5
-                        nt_count += prog5
+                                    if self.progress == False:
+                                        self.prog8 = hidden_quad(self.blanks)
+                                        update_blanks(self.blanks, self.sudoku)
+                                        self.progress = self.progress or self.prog8
+                                        self.hq_count += self.prog8
 
-                        if progress == False:
-                            prog6 = hidden_triple(blanks)
-                            update_blanks(blanks, sudoku)
-                            progress = progress or prog6
-                            ht_count += prog6
+                                        if self.progress == False:
+                                            self.prog9 = reduction(self.blanks)
+                                            update_blanks(self.blanks, self.sudoku)
+                                            self.progress = self.progress or self.prog9
+                                            self.r_count += self.prog9
 
-                            if progress == False:
-                                prog7 = naked_quad(blanks)
-                                update_blanks(blanks, sudoku)
-                                progress = progress or prog7
-                                nq_count += prog7
+        self.sudoku.display()
+        print(f'We solved {self.ns_count} cells with naked singles.')
+        print(f'We solved {self.hs_count} cells with hidden singles.')
+        print(f'We helped {self.nd_count} times with naked doubles.')
+        print(f'We helped {self.hd_count} times with hidden doubles.')
+        print(f'We helped {self.nt_count} times with naked triples.')
+        print(f'We helped {self.ht_count} times with hidden triples.')
+        print(f'We helped {self.nq_count} times with naked quads.')
+        print(f'We helped {self.hq_count} times with hidden quads.')
+        print(f'We helped {self.r_count} times with reduction.')
 
-                                if progress == False:
-                                    prog8 = hidden_quad(blanks)
-                                    update_blanks(blanks, sudoku)
-                                    progress = progress or prog8
-                                    hq_count += prog8
+        print()
 
-                                    if progress == False:
-                                        prog9 = reduction(blanks)
-                                        update_blanks(blanks, sudoku)
-                                        progress = progress or prog9
-                                        r_count += prog9
-
-    sudoku.display()
-    print(f'We solved {ns_count} cells with naked singles.')
-    print(f'We solved {hs_count} cells with hidden singles.')
-    print(f'We helped {nd_count} times with naked doubles.')
-    print(f'We helped {hd_count} times with hidden doubles.')
-    print(f'We helped {nt_count} times with naked triples.')
-    print(f'We helped {ht_count} times with hidden triples.')
-    print(f'We helped {nq_count} times with naked quads.')
-    print(f'We helped {hq_count} times with hidden quads.')
-    print(f'We helped {r_count} times with reduction.')
-
-    # Step 3: Finish with brute force, if needed.
-    # Only brute force through the possibilites, though. (lbf)
-    # 3 Possibilities, just like the other one.
-    # 1) Nothing filled in yet -> Use the first possibility
-    # 2) The last possibility filled in -> step back to previous blank
-    # 3) Else -> try the next possibility
-    # Note that we are guarenteed to have at least 2 possibilities,
-    # as the previous code would have filled
-    # In the solution if there were only one possibility
-
-    i = 0
-    count = 0
-
-    while i != len(blanks):
-        count += 1
-
-        # Scenario 1: blank number i is still blank. 
-        # Start with the first possibility
-        if blanks[i][0] == '.':
-            blanks[i][0] = blanks[i][3][0]
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Scenario 2: blank number i is at the last possibility. 
-        # So we've already tried all the options
-        # So we need to clear it out and step back.
-        # Also we skip the rest of the loop, 
-        # becacuse we don't need to check for consistency
-        # In fact, it would be bad to check for consistency, 
-        # as we are guarenteed to trivially be consistent
-        # This would lead to stepping forward, canceling out our step back, 
-        # and ending up in an infinite loop
-        elif blanks[i][0] == blanks[i][3][-1]:
-            blanks[i][0] = '.'
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-            i -= 1
-            continue
-
-        # Scenario 3: There's some non last possibility already plugged in. 
-        # So we step forward by one.
-        else:
-            blanks[i][0] = blanks[i][3][blanks[i][3].index(blanks[i][0]) + 1]
-            # The above is inefficient, I should store which poss I'm on
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][0]
-
-        # Now we check for consistency. 
-        # If we are consistent, we'll step forward.
-        # If not, we'll run through this same spot again.
-        consistent = (check(sudoku.row(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.column(blanks[i][1], blanks[i][2])) and
-                      check(sudoku.box(blanks[i][1], blanks[i][2])))
-        if consistent:
-            i += 1
-
-    # Format the solution as a string of 81 characters, like the input
-    solution = ''.join([''.join(x) for x in sudoku.cells])
-
-    sudoku.display()
-    print(solution)
-    print('\n')
-    print(f'Brute force: {count} loops.')
-    print('\n')
-    print(f'''--- This program took 
-          {time.time() - start_time} seconds to run. ---''')
-    print('-' * 200)
-    print('\n')
-    return solution
+        self.solve_lbf()
 
 
 def full_solve(puzzle):
