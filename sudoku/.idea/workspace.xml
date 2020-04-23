@@ -9,9 +9,27 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand />
+    <select />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="sudoku" />
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
+  <component name="JupyterTrust" id="028c1379-366d-45e8-9bee-79c15d10ddb4" />
   <component name="ProjectId" id="1Z548buLu7ai0KU6Z4TZ69XnRXG" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -22,7 +40,11 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+<<<<<<< HEAD
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../junk/untitled0.py" />
+=======
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../web_scraping/scryfall.ipynb" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyConsoleOptionsProvider">
@@ -33,7 +55,33 @@
       </console-settings>
     </option>
   </component>
+<<<<<<< HEAD
   <component name="RunManager" selected="Python.untitled0">
+=======
+  <component name="RunManager" selected="Python.scratch">
+    <configuration name="scratch" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="sudoku" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="C:\Users\evant\Anaconda3\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$APPLICATION_CONFIG_DIR$/scratches" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$APPLICATION_CONFIG_DIR$/scratches/scratch.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
     <configuration name="solvers" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="sudoku" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -41,9 +89,9 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\evant\Anaconda3\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
@@ -80,7 +128,11 @@
     </configuration>
     <recent_temporary>
       <list>
+<<<<<<< HEAD
         <item itemvalue="Python.untitled0" />
+=======
+        <item itemvalue="Python.scratch" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
         <item itemvalue="Python.solvers" />
       </list>
     </recent_temporary>
@@ -97,7 +149,13 @@
       <updated>1584115462960</updated>
       <workItem from="1584115469377" duration="1026000" />
       <workItem from="1584161753844" duration="1002000" />
+<<<<<<< HEAD
       <workItem from="1584540037644" duration="3372000" />
+=======
+      <workItem from="1584230709326" duration="86000" />
+      <workItem from="1584230807389" duration="2055000" />
+      <workItem from="1584567142522" duration="1247000" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
     </task>
     <servers />
   </component>
@@ -109,6 +167,7 @@
       <screen x="72" y="0" width="1296" height="912" />
     </state>
     <state x="422" y="156" key="#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog/72.0.1296.912@72.0.1296.912" timestamp="1584115565264" />
+<<<<<<< HEAD
     <state x="889" y="333" key="FileChooserDialogImpl" timestamp="1584540074310">
       <screen x="62" y="0" width="2498" height="1440" />
     </state>
@@ -146,16 +205,75 @@
       <screen x="62" y="0" width="2498" height="1440" />
     </state>
     <state width="2455" height="508" key="GridCell.Tab.1.right/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584543412455" />
+=======
+    <state x="434" y="65" key="#scratch" timestamp="1584230735271">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state x="434" y="65" key="#scratch/72.0.1296.912@72.0.1296.912" timestamp="1584230735271" />
+    <state x="434" y="65" key="#solvers" timestamp="1584230728100">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state x="434" y="65" key="#solvers/72.0.1296.912@72.0.1296.912" timestamp="1584230728100" />
+    <state x="501" y="211" key="FileChooserDialogImpl" timestamp="1584567849322">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state x="889" y="333" key="FileChooserDialogImpl/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584161796060" />
+    <state x="501" y="211" key="FileChooserDialogImpl/72.0.1296.912@72.0.1296.912" timestamp="1584567849322" />
+    <state width="1254" height="308" key="GridCell.Tab.0.bottom" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.bottom/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584164434843" />
+    <state width="1254" height="308" key="GridCell.Tab.0.bottom/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.0.center" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.center/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584164434842" />
+    <state width="1254" height="308" key="GridCell.Tab.0.center/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.0.left" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.left/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584164434842" />
+    <state width="1254" height="308" key="GridCell.Tab.0.left/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.0.right" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="2455" height="414" key="GridCell.Tab.0.right/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584164434843" />
+    <state width="1254" height="308" key="GridCell.Tab.0.right/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.1.bottom" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="1254" height="308" key="GridCell.Tab.1.bottom/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.1.center" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="1254" height="308" key="GridCell.Tab.1.center/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.1.left" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="1254" height="308" key="GridCell.Tab.1.left/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+    <state width="1254" height="308" key="GridCell.Tab.1.right" timestamp="1584233043575">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state width="1254" height="308" key="GridCell.Tab.1.right/72.0.1296.912@72.0.1296.912" timestamp="1584233043575" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
     <state x="351" y="156" key="SettingsEditor" timestamp="1584161826910">
       <screen x="62" y="0" width="2498" height="1440" />
     </state>
     <state x="351" y="156" key="SettingsEditor/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584161826910" />
     <state x="222" y="99" key="SettingsEditor/72.0.1296.912@72.0.1296.912" timestamp="1584116334953" />
+<<<<<<< HEAD
     <state x="681" y="442" key="com.intellij.ide.util.TipDialog" timestamp="1584540061418">
       <screen x="62" y="0" width="2498" height="1440" />
     </state>
     <state x="681" y="442" key="com.intellij.ide.util.TipDialog/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584540061418" />
     <state x="393" y="280" key="com.intellij.ide.util.TipDialog/72.0.1296.912@72.0.1296.912" timestamp="1584115472562" />
+=======
+    <state x="393" y="280" key="com.intellij.ide.util.TipDialog" timestamp="1584567150489">
+      <screen x="72" y="0" width="1296" height="912" />
+    </state>
+    <state x="681" y="442" key="com.intellij.ide.util.TipDialog/62.0.2498.1440/2560.0.1440.900@62.0.2498.1440" timestamp="1584161754493" />
+    <state x="393" y="280" key="com.intellij.ide.util.TipDialog/72.0.1296.912@72.0.1296.912" timestamp="1584567150489" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -214,7 +332,12 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+<<<<<<< HEAD
     <SUITE FILE_PATH="coverage/sudoku$solvers.coverage" NAME="solvers Coverage Results" MODIFIED="1584164144315" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/sudoku$untitled0.coverage" NAME="untitled0 Coverage Results" MODIFIED="1584542874098" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/../../junk" />
+=======
+    <SUITE FILE_PATH="coverage/sudoku$solvers.coverage" NAME="solvers Coverage Results" MODIFIED="1584230728147" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/sudoku$scratch.coverage" NAME="scratch Coverage Results" MODIFIED="1584232248275" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+>>>>>>> a84e7d030abd7a6e5e89c2224a9acfe9124be342
   </component>
 </project>

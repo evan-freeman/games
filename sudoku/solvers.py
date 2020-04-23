@@ -27,14 +27,14 @@ To do:
         print solution as string
         print solution as grid
         time to solve
-        strageties used
+        strategies used
         how many times each strategy was used
         how much progress is made from each application of a strategy
         complexity information
         compare human vs computer complexity
 
         have a method which does EVERYTHING, for simplicity / ease of use
-        but also be able to do certian things selectively
+        but also be able to do certain things selectively
 """
 
 
