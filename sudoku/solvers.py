@@ -22,10 +22,6 @@ To do:
         also do each strategy as a class? maybe
 
         solve, with each strategy
-        print original as string
-        print original as grid
-        print solution as string
-        print solution as grid
         time to solve
         strategies used
         how many times each strategy was used
@@ -36,7 +32,6 @@ To do:
         have a method which does EVERYTHING, for simplicity / ease of use
         but also be able to do certain things selectively
 """
-
 
 class Grid:
     """This is the grid object we will use to represent the Sudoku."""
@@ -234,10 +229,9 @@ def update_blanks(blanks, sudoku):
 
     for blank in blanks:
         for poss in blank[3][:]:
-            if poss in sudoku.column(blank[1], blank[2]) or poss in sudoku.row(blank[1],
-                                                                               blank[2]) or poss in sudoku.box(blank[1],
-                                                                                                               blank[
-                                                                                                                   2]):
+            if (poss in sudoku.column(blank[1], blank[2]) or
+                poss in sudoku.row(blank[1], blank[2]) or
+                poss in sudoku.box(blank[1], blank[2])):
                 blank[3].remove(poss)
 
 
@@ -864,6 +858,7 @@ class Solver:
         self.i = 0
         self.count = 0
         self.type = 'None'
+        self.puzzle = puzzle
 
     def begin_puzzle(self):
         print(f'Here is the {self.type} solution result:')
@@ -872,19 +867,12 @@ class Solver:
 
     def finish_puzzle(self):
         # Format the solution as a string of 81 characters, like the input
-        solution = ''.join([''.join(x) for x in self.sudoku.cells])
-
-        self.sudoku.display()
+        self.solution = ''.join([''.join(x) for x in self.sudoku.cells])
         self.total_time = time.time() - self.start_time
-        print(solution)
-        print('\n')
-        print(f'This sudoku was solved in {self.count} brute force loops.')
-        print('\n')
-        print(f'''--- This program took {self.total_time} seconds to run. ---''')
-        print('\n')
-        print('-' * 200)
-        print('\n')
-        return solution
+        return self.solution
+
+    def display_all(self):
+        pass
 
 
 class BruteForce(Solver):
@@ -919,8 +907,6 @@ class BruteForce(Solver):
         # and the sudoku grid itself
         # Keep going until our index hits the length of blanks
         # (Which is to say, we're one step beyond)
-
-        self.begin_puzzle()
 
         while self.i != len(self.blanks):
             self.count += 1
@@ -1024,19 +1010,19 @@ class LimitedBruteForce(BruteForce):
         self.finish_puzzle()
 
 
-class Solve(LimitedBruteForce):
+class StrategySolve(LimitedBruteForce):
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
-        self.r_count = 0
-        self.hq_count = 0
-        self.nq_count = 0
-        self.ht_count = 0
-        self.nt_count = 0
-        self.hd_count = 0
-        self.nd_count = 0
-        self.hs_count = 0
         self.ns_count = 0
+        self.hs_count = 0
+        self.nd_count = 0
+        self.hd_count = 0
+        self.nt_count = 0
+        self.ht_count = 0
+        self.nq_count = 0
+        self.hq_count = 0
+        self.r_count = 0
         self.type = 'Solve'
 
     def solve(self):
@@ -1069,7 +1055,6 @@ class Solve(LimitedBruteForce):
 
         """
 
-        self.begin_puzzle()
 
         self.progress = True
         while self.progress:
@@ -1127,19 +1112,6 @@ class Solve(LimitedBruteForce):
                                             self.progress = self.progress or self.prog9
                                             self.r_count += self.prog9
 
-        self.sudoku.display()
-        print(f'We solved {self.ns_count} cells with naked singles.')
-        print(f'We solved {self.hs_count} cells with hidden singles.')
-        print(f'We helped {self.nd_count} times with naked doubles.')
-        print(f'We helped {self.hd_count} times with hidden doubles.')
-        print(f'We helped {self.nt_count} times with naked triples.')
-        print(f'We helped {self.ht_count} times with hidden triples.')
-        print(f'We helped {self.nq_count} times with naked quads.')
-        print(f'We helped {self.hq_count} times with hidden quads.')
-        print(f'We helped {self.r_count} times with reduction.')
-
-        print()
-
         self.solve_lbf()
 
 
@@ -1159,9 +1131,9 @@ def full_solve(puzzle):
 
     """
 
-    solve_bf(puzzle)
-    solve_lbf(puzzle)
-    solve(puzzle)
+    BruteForce(puzzle).solve_bf()
+    LimitedBruteForce(puzzle).solve_lbf()
+    StrategySolve(puzzle).solve()
 
 
 if __name__ == '__main__':
