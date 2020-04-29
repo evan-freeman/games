@@ -1,4 +1,4 @@
-import solvers
+import sudoku_solving_algorithms as solvers
 import pandas as pd
 
 # if __name__ == '__main__':
