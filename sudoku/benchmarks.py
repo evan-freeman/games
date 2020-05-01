@@ -18,7 +18,7 @@ def analyze(benchmark_set, output_filename):
     """
     This function will take a benchmark set and solve it with my three methods.
     It will also give some statistics.
-    It will save this as a csv with the given name
+    It will save this as a csv with the given name.
     """
 
     benchmark_result_df = pd.DataFrame(columns=[
@@ -70,7 +70,8 @@ def analyze(benchmark_set, output_filename):
             solve.r_count], index=benchmark_result_df.columns),
             ignore_index=True)
 
-        print(f'{output_filename}: puzzle #{i}: time = {bf.total_time}, {lbf.total_time}, {solve.total_time}')
+        if i%100 == 0:
+            print(f'{output_filename}: puzzle #{i}: time = {bf.total_time}, {lbf.total_time}, {solve.total_time}')
     benchmark_result_df.to_csv(f'{filepath}{output_filename}.csv')
 
 
@@ -78,7 +79,7 @@ def analyze(benchmark_set, output_filename):
 kaggle_benchmark_set = pd.read_csv(f'{filepath}kaggle_benchmark_set.csv')['quizzes']
 
 # Benchmark 2: Minimum Clues (49158 , Easy)
-minclue_benchmark_set = pd.read_csv(f'{filepath}sudoku17.txt').iloc[:, 0]
+minclue_benchmark_set = pd.read_csv(f'{filepath}sudoku17.txt').iloc[:50, 0]
 
 # Benchmark 3: magictour_top1465 (1465, moderately hard)
 magictour_benchmark_set = pd.read_csv(f'{filepath}top1465.txt').iloc[:, 0]
@@ -91,9 +92,9 @@ hardest_benchmark_set = hardest_benchmark_set['sudoku']
 
 benchmarks = [
     (kaggle_benchmark_set, 'kaggle_results'),
-    (minclue_benchmark_set, 'minclue_results'),
-    (magictour_benchmark_set, 'magictour_results'),
-    (hardest_benchmark_set, 'hardest_benchmark_results')
+    # (minclue_benchmark_set, 'minclue_results_50'),
+    # (magictour_benchmark_set, 'magictour_results'),
+    # (hardest_benchmark_set, 'hardest_benchmark_results')
 ]
 
 for bench_set, filename in benchmarks:

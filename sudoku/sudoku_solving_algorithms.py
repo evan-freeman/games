@@ -54,22 +54,7 @@ class Grid:
         """
         This function outputs the contents of the box containing the cell
         with coordinates i, j.
-
-        Parameters
-        ----------
-        i : TYPE
-            DESCRIPTION.
-        j : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        box : TYPE
-            DESCRIPTION.
-
         """
-        # let's find the coordinate of the upper left cell in the box
-        # We'll calculate the rest of the cell from there
 
         # box x coordinate
         x = i // 3 * 3
@@ -83,19 +68,6 @@ class Grid:
         """
         This function outputs the contents of the row containing the cell with
         coordinates i, j.
-
-        Parameters
-        ----------
-        i : TYPE
-            DESCRIPTION.
-        j : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        row : TYPE
-            DESCRIPTION.
-
         """
         row = [self.cells[i][y] for y in range(9)]
         return row
@@ -104,31 +76,13 @@ class Grid:
         """
         This function outputs the contents of the column containing
         the cell with coordinates i, j.
-
-        Parameters
-        ----------
-        i : TYPE
-            DESCRIPTION.
-        j : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        column : TYPE
-            DESCRIPTION.
-
         """
         column = [self.cells[x][j] for x in range(9)]
         return column
 
     def display(self):
         """
-        Displays the puzzle, as a single block of strings
-
-        Returns
-        -------
-        None.
-
+        Displays the puzzle as a single 81 character string
         """
         print('')
         for x in self.cells:
@@ -137,12 +91,7 @@ class Grid:
 
     def display_grid(self):
         """
-        Displays the puzzle, broken up into lists
-
-        Returns
-        -------
-        None.
-
+        Displays the puzzle as a 9x9 grid of strings
         """
         print('')
         for x in self.cells:
@@ -173,19 +122,6 @@ def check(thing):
 def box_num(i, j):
     """
     # Find what number box a cell is in (0 - 8)
-
-    Parameters
-    ----------
-    i : TYPE
-        DESCRIPTION.
-    j : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    int
-        DESCRIPTION.
-
     """
 
     # box x coordinate
@@ -216,18 +152,6 @@ def box_num(i, j):
 def update_blanks(blanks, sudoku):
     """
     Updates all blanks with new information in the sudoku
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-    sudoku : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    None.
-
     """
 
     for blank in blanks:
@@ -239,9 +163,13 @@ def update_blanks(blanks, sudoku):
 
 
 def generate_blanks(sudoku):
-    # Step 1: #First, generate a list of all blank spaces, along with their
-    # coordinates, and possibilities, in the format of 
-    # ['.', i, j, [possible numbers]]
+    """
+    Generates a list with the following information:
+    1) cell (i, j) attribute of grid object
+    2) cell x coordinate (i)
+    3) cell y coordinate (j)
+    4) list of possible candidates for cell (i, j)
+    """
     blanks = []
     for i in range(9):
         for j in range(9):
@@ -260,6 +188,16 @@ def generate_blanks(sudoku):
     return blanks
 
 
+def generate_other_blanks(blank, blanks):
+    """Returns blanks in OTHER cells in the same column, region, and box"""
+    return ([other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank],
+            [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank],
+            [other_blank for other_blank in blanks if
+             int(other_blank[1]) // 3 == int(blank[1]) // 3 and
+             int(other_blank[2]) // 3 == int(blank[2]) // 3 and
+             other_blank != blank])
+
+
 # =============================================================================
 # STRATEGIES    
 # =============================================================================
@@ -267,19 +205,6 @@ def generate_blanks(sudoku):
 def naked_single(blanks, sudoku):
     """
     Fill in a blank if there is only a single possibility
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-    sudoku : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
     """
 
     for i in range(len(blanks)):
@@ -296,21 +221,7 @@ def naked_single(blanks, sudoku):
 def hidden_single(blanks, sudoku):
     """
     Fill in when there is only one remaining place for a number in a row, 
-    column, or box. For each blank, see if it is the only number in it's row, 
-    column, or box that could contain a given number. Nuts, maybe I should 
-    have attached the possibilities to each cell..., some sort of object
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-    sudoku : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
+    column, or box.
     """
 
     # For each blank:
@@ -324,20 +235,7 @@ def hidden_single(blanks, sudoku):
     for blank in blanks:
         # generate the subset of blanks that are in the same column, row, 
         # or box as our current blank
-
-        # These have the same second coordinate
-        blank_column = [other_blank for other_blank in blanks if
-                        other_blank[2] == blank[2] and other_blank != blank]
-
-        # These have the same first coordinate
-        blank_row = [other_blank for other_blank in blanks if
-                     other_blank[1] == blank[1] and other_blank != blank]
-
-        # These have the same whole number when divided by 3
-        blank_box = [other_blank for other_blank in blanks if
-                     int(other_blank[1]) // 3 == int(blank[1]) // 3 and
-                     int(other_blank[2]) // 3 == int(blank[2]) // 3 and
-                     other_blank != blank]
+        blank_column, blank_row, blank_box = generate_other_blanks(blank, blanks)
 
         # Iterate through each possibility. See if it is the only 
         other_column_poss = {num for other_poss in blank_column for
@@ -357,39 +255,12 @@ def hidden_single(blanks, sudoku):
 
 def naked_double(blanks):
     """
-    Just naked doubles
-    THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
-    Probably not a big deal though, and makes the code more readable and 
-    the logic easier to write for me
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
+    If there are a pair of numbers in the same region, remove those numbers from the rest of the region
     """
     for blank in blanks:
         # generate the subset of blanks that are in the same column, row, 
         # or box as our current blank
-
-        # These have the same second coordinate
-        blank_column = [other_blank for other_blank in blanks if
-                        other_blank[2] == blank[2] and other_blank != blank]
-
-        # These have the same first coordinate
-        blank_row = [other_blank for other_blank in blanks if
-                     other_blank[1] == blank[1] and other_blank != blank]
-
-        # These have the same whole number when divided by 3
-        blank_box = [other_blank for other_blank in blanks if
-                     int(other_blank[1]) // 3 == int(blank[1]) // 3 and
-                     int(other_blank[2]) // 3 == int(blank[2]) // 3 and
-                     other_blank != blank]
+        blank_column, blank_row, blank_box = generate_other_blanks(blank, blanks)
 
         # See if any other blank in the row, column, or box 
         # has identical possibilities, and is length 2.
@@ -425,23 +296,8 @@ def naked_double(blanks):
 
 def hidden_double(blanks):
     """
-    If a pair of numbers only appears in 2 cells for a given row, 
-    column, or box, we should update those cells to only that pair
-    For each row, column, or box, consider each pair of numbers from 
-    among the possiblites in that space
-    Yes, we're regenerating these lists of blanks. It's probably not a problem.
-    Probably...
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
+    If a pair of numbers only appears in 2 cells for a given region,
+    we should update those cells to only that pair
     """
 
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
@@ -490,30 +346,8 @@ def hidden_double(blanks):
 
 def naked_triple(blanks):
     """
-    Naked triples
-    Recall that a naked triple means 3 in a subsection that all have 
-    EXACTLY and only members of a len 3 subset of possibilities
-    So {1, 2}, {1, 3}, and {2, 3} would form a naked triple
-    I may assume that there are no naked singles or doubles 
-    because of the previous code
-    Instead of going through each blank and generating 
-    THIS IS A BIT INEFFICIENT, I'M GENERATING THESE LISTS BOTH ABOVE AND HERE
-    Probably not a big deal though, and makes the code more readable 
-    and the logic easier to write for me
-    Let's generate each column, row, and box, but only for blanks
-    Remember, these are copies, so alter the original items in b???
-    Just make a list, or maybe a dict
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
+    If a set of 3 numbers are the only candidates in 3 cells in a region,
+    remove those 3 numbers from the rest of the region.
     """
 
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
@@ -579,20 +413,8 @@ def naked_triple(blanks):
 
 def hidden_triple(blanks):
     """
-    If there's a set of 3 numbers that appear in exactly 3 cells in a 
-    given space, reduce the possibilities of those cells to 
-    exactly those 3 numbers      
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
+    If there's a set of 3 numbers that appear in exactly 3 cells in a given space,
+    reduce the possibilities of those cells to exactly those 3 numbers
     """
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
                      i in range(9)]
@@ -639,21 +461,9 @@ def hidden_triple(blanks):
 
 def naked_quad(blanks):
     """
-    Same as naked triple, but with 4
-    Cleaned up the code a bit by using .issubset
-    Need to go back and clean up naked triple
+    If a set of 4 numbers are the only candidates among 4 cells in a region,
+    remove those 4 numbers from the rest of the region.
     Very rare
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
     """
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
                      i in range(9)]
@@ -703,19 +513,9 @@ def naked_quad(blanks):
 
 def hidden_quad(blanks):
     """
-    Same as hidden_triple, but with 4
+    If a set of 4 numbers only appear in 4 cells in a region,
+    update those cells candidates to just those 4 numbers.
     Very rare
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
     """
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
                      i in range(9)]
@@ -762,8 +562,7 @@ def hidden_quad(blanks):
 
 def reduction(blanks):
     """
-    If all occurences of a number in one region (box, line, or row) 
-    intersect with another region (box, line, or row),
+    If all occurrences of a number in one region intersect with another region ,
     then remove that number from the second region
     I believe there is a way to use the same code for each, 
     but for now I'll hand code each of 4 cases:
@@ -771,17 +570,6 @@ def reduction(blanks):
         2 - Box gives info about column
         3 - Column gives info about box
         4 - Row gives info about box
-
-    Parameters
-    ----------
-    blanks : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    bool
-        DESCRIPTION.
-
     """
 
     column_blanks = [[blank for blank in blanks if blank[2] == i] for
@@ -853,6 +641,7 @@ def reduction(blanks):
 # =============================================================================
 
 class Solver:
+    """ This is a class of general attributes and methods for my 3 Sudoku Solvers"""
 
     def __init__(self, puzzle):
         self.start_time = time.time()
@@ -880,18 +669,8 @@ class Solver:
 
 class BruteForce(Solver):
     """
-    Here is my original, mostly brute force, solution
-
-    Parameters
-    ----------
-    puzzle : string
-        81 characters in length. The puzzle. Use periods to as blanks for now.
-
-    Returns
-    -------
-    solution : string
-        81 characters in length. The solved puzzle.
-
+    Here is a class of solver that uses full brute force. So we don't even limit our candidates for brute force,
+    we just go numerically through them all.
     """
 
     def __init__(self, puzzle):
@@ -953,6 +732,7 @@ class BruteForce(Solver):
 
 
 class LimitedBruteForce(BruteForce):
+    """This class uses the same logic as brute force, but first reduces the possible candidate to brute force over"""
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
@@ -1015,6 +795,7 @@ class LimitedBruteForce(BruteForce):
 
 
 class StrategySolve(LimitedBruteForce):
+    """This solver applies the 9 strategies I've programmes above, then finishes with limited brute force if necessary"""
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
@@ -1046,17 +827,6 @@ class StrategySolve(LimitedBruteForce):
         I've grouped these together into 'reduction' so it'll be a bit faster.
         but I'd like to split them out later
     9. Finish with limited brute force if necessary
-
-        Parameters
-        ----------
-        puzzle : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        TYPE
-            DESCRIPTION.
-
         """
 
         self.progress = True
@@ -1120,32 +890,7 @@ class StrategySolve(LimitedBruteForce):
 
 def full_solve(puzzle):
     """
-     Here's a shortcut to solving with all 3 methods, 
-     so I don't have to keep typing it out
-
-    Parameters
-    ----------
-    puzzle : TYPE
-        DESCRIPTION.
-
-    Returns
-    -------
-    [BruteForce(puzzle).solve_bf(), LimitedBruteForce(puzzle).solve_lbf(), StrategySolve(puzzle).solve()]
-
+     Here's a shortcut to solving with all 3 methods, so I don't have to keep typing it out
     """
 
     return [BruteForce(puzzle).solve_bf(), LimitedBruteForce(puzzle).solve_lbf(), StrategySolve(puzzle).solve()]
-
-
-if __name__ == '__main__':
-    # Easy Example
-    # puzzle = '''...1.5...14....67..8...24...63.7..1.9....
-    # ...3.1..9.52...72...8..26....35...4.9...'''
-
-    # Trickier Example
-    # full_solve(puzzle)
-    # puzzle = '900050000200630005006002000003100070000020900080005000000800100500010004000060008'.replace('0','.')
-    # BruteForce(puzzle).solve_bf()
-
-    puzzle = '000921003009000060000000500080403006007000800500700040003000000020000700800195000'.replace('0', '.')
-    full_solve(puzzle)
