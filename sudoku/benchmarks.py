@@ -70,8 +70,7 @@ def analyze(benchmark_set, output_filename):
             solve.r_count], index=benchmark_result_df.columns),
             ignore_index=True)
 
-        if i%100 == 0:
-            print(f'{output_filename}: puzzle #{i}: time = {bf.total_time}, {lbf.total_time}, {solve.total_time}')
+        print(f'{output_filename}: puzzle #{i}: time = {bf.total_time}, {lbf.total_time}, {solve.total_time}')
     benchmark_result_df.to_csv(f'{filepath}{output_filename}.csv')
 
 
@@ -91,9 +90,9 @@ hardest_benchmark_set = hardest_benchmark_set['sudoku']
 # %%
 
 benchmarks = [
-    (kaggle_benchmark_set, 'kaggle_results'),
+    # (kaggle_benchmark_set, 'kaggle_results'),
     # (minclue_benchmark_set, 'minclue_results_50'),
-    # (magictour_benchmark_set, 'magictour_results'),
+    (magictour_benchmark_set, 'magictour_results'),
     # (hardest_benchmark_set, 'hardest_benchmark_results')
 ]
 
