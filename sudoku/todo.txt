@@ -1,6 +1,6 @@
 Sudoku Project ToDo
 
-1) Further refactoring of code. The solver classess are in good shape, but the individual strategies have some repetition, and are a bit hard to parse.
+1) Further refactoring of code. The solver classes are in good shape, but the individual strategies have some repetition, and are a bit hard to parse.
 -Big rewrite would be making the cells objects, instead of just attributes of grid object, with blanks as subattributes, and region as attribute
 -I started making the blanks a list before realizing the scope of what I was going to do with them...
 2) More benchmarking. Currently I'm just benchmarking with my full solver, not bf or lbf because it take a LONG TIME. 

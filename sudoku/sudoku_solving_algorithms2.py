@@ -1,256 +1,335 @@
 """
 Here are all my Sudoku solving algorithms.
-
-Working on refactoring them for maintainability and readability.
-Also, want to add some more features, like contradiction depth checker,
-and something about how far we are from the correct answer when we start
-(like if we have to start with a 1, but the correct first cell is a 9)
 """
 
 import time
 import itertools as it
+import numpy as np
 
-"""
-To do:
-    1. Add in the code for investigating difficulty.
-    2. REFACTOR. So much repetition...
-    3. Rewrite Solve as a class, which can do different things:
-        probably have "solver" as a class, with different particular types of
-        solver
 
-        then i can update universal things in the superclass
-        also do each strategy as a class? maybe
+class Cell:
+    """ This is the Cell object we will use to represent a given cell, with all of the information about it.
 
-        solve, with each strategy
-        time to solve
-        strategies used
-        how many times each strategy was used
-        how much progress is made from each application of a strategy
-        complexity information
-        compare human vs computer complexity
+    TODO Find a mathematical solution to identifying the box number of a given cell, not a handcrafted dict.
 
-        have a method which does EVERYTHING, for simplicity / ease of use
-        but also be able to do certain things selectively
-    4. Remove duplicates
-"""
+    """
+
+    def __init__(self, x, y, value=0, n=9):
+        self.x = x
+        self.y = y
+        self.value = value
+        if self.value == 0:
+            self.poss = list(range(1, n + 1))
+        else:
+            self.poss = []
+        self.column = self.x
+        self.row = self.y
+
+        box_dict = {(0, 0): 0, (0, 3): 1, (0, 6): 2,
+                    (3, 0): 3, (3, 3): 4, (3, 6): 5,
+                    (6, 0): 6, (6, 3): 7, (6, 6): 8}
+        self.box = box_dict[self.x // 3 * 3, self.y // 3 * 3]
+
+
+# =============================================================================
+# STATIC STRATEGY HELPER FUNCTIONS
+# =============================================================================
 
 
 class Grid:
-    """This is the grid object we will use to represent the Sudoku."""
+    """This is the Grid object we will use to represent a Sudoku.
+    It has a lot of attributes and methods. It basically stores all information about the Sudoku,
+    along with all the techniques needed to solve and analyze it."""
 
-    def __init__(self, string):
-        string = string.replace('0', '.')
-        self.cells = [[x for x in string[0:9]],
-                      [x for x in string[9:18]],
-                      [x for x in string[18:27]],
-                      [x for x in string[27:36]],
-                      [x for x in string[36:45]],
-                      [x for x in string[45:54]],
-                      [x for x in string[54:63]],
-                      [x for x in string[63:72]],
-                      [x for x in string[72:81]]]
+    @staticmethod
+    def int_except(x: str) -> int:
+        """ Returns x as an int if possible, else returns 0. Used for parsing the input puzzle.
 
-    def box(self, i, j):
+        Args:
+            x (str): One element of the input, presumably a string,
+                        but it could also be an 81 character int that represents the puzzle.
+
+        Returns:
+            int: The value of that cell as an int, or 0, which represents unknown.
         """
-        This function outputs the contents of the box containing the cell
-        with coordinates i, j.
+        try:
+            return int(x)
+        except TypeError:
+            return 0
+
+    def generate_region_list(self, region: str) -> list:
+        """This function generates a list of lists containing the cell objects that belong to a given region.
+        We'll use this in our __init__, which is why we've defined it here.
+
+        Args:
+            region: A string that denotes the desired region - column, row or box
+
+        Returns:
+            list: This is a list of 9 lists, each of which contains the 9 cells that belong to a particular region.
         """
 
-        # box x coordinate
-        x = i // 3 * 3
-        # box y coordinate
-        y = j // 3 * 3
+        return [[cell for cell in self.cells.values() if getattr(cell, region) == i]
+                for i in range(self.n)]
 
-        box = [self.cells[a][b] for a in [x, x + 1, x + 2] for b in [y, y + 1, y + 2]]
-        return box
+    def generate_blank_region_list(self, region: str) -> list:
+        """This function generates a list of lists containing the BLANK cell objects that belong to a given region.
+        We'll use this in our __init__, which is why we've defined it here.
 
-    def row(self, i, j):
-        """
-        This function outputs the contents of the row containing the cell with
-        coordinates i, j.
-        """
-        row = [self.cells[i][y] for y in range(9)]
-        return row
+        Args:
+            region: A string that denotes the desired region - column, row or box
 
-    def column(self, i, j):
+        Returns:
+            list: This is a list of 9 lists, each of which contains the BLANK cells that belong to a particular region.
+                    The lists may be empty.
         """
-        This function outputs the contents of the column containing
-        the cell with coordinates i, j.
+
+        return [[cell for cell in self.cells.values() if getattr(cell, region) == i and cell.value == 0]
+                for i in range(self.n)]
+
+
+    def __init__(self, puzzle):
         """
-        column = [self.cells[x][j] for x in range(9)]
-        return column
+
+        """
+
+        self.input = puzzle
+        self.list = [self.int_except(x) for x in puzzle]
+        self.length = len(puzzle)
+        self.n = int(self.length ** .5)
+        self.arr = np.array(self.list).reshape((self.n, self.n))
+        self.cells = {(x, y): Cell(x, y, self.arr[x, y], self.n) for x in range(self.n) for y in range(self.n)}
+        self.columns = self.generate_region_list('column')
+        self.rows = self.generate_region_list('row')
+        self.boxes = self.generate_region_list('box')
+        self.blanks = [cell for cell in self.cells.values() if cell.value == 0]
+        self.column_blanks = self.generate_blank_region_list('column')
+        self.row_blanks = self.generate_blank_region_list('row')
+        self.box_blanks = self.generate_blank_region_list('box')
+        self.region_list = ['column', 'row', 'box']
+
+    # =============================================================================
+    # DISPLAY FUNCTIONS
+    # =============================================================================
+
+    def stringify(self):
+        """This function takes the puzzle in it's current state and converts it back into an 81 character string."""
+
+        output = [self.cells[(i, j)].value for i in range(self.n) for j in range(self.n)]
+        self.as_string = ''.join(str(x) for x in output)
 
     def display(self):
         """
-        Displays the puzzle as a single 81 character string
+        Displays the puzzle as a single 81 character string.
+        Currently I'm working with the display as a string because I don't know efficient ways to concatenate ints.
         """
-        print('')
-        for x in self.cells:
-            print(''.join(x))
-        print('')
+
+        self.stringify()
+        print(self.as_string)
 
     def display_grid(self):
         """
-        Displays the puzzle as a 9x9 grid of strings
+        Displays the puzzle as a 9x9 grid of strings.
+
+        It would be nice to use numpy reshape functionality, but then I'd have to concatenate, which
+        I think would require going back and forth between strings and ints, as I don't know a way to
+        concat ints. But I might be wrong about that.
         """
-        print('')
-        for x in self.cells:
-            print(x)
-        print('')
 
+        self.stringify()
+        self.as_string_list = [self.as_string[i:i + self.n] for i in range(0, self.length, self.n)]
+        for row in self.as_string_list:
+            print(row)
 
-# =============================================================================
-# GENERAL FUNCTIONS
-# =============================================================================
+    # =============================================================================
+    # STRATEGY HELPER FUNCTIONS
+    # =============================================================================
 
-def check(thing):
-    """ 
-    Checks a given input (box, row, or column) for duplicates
-    Could be any list really, but will only check for duplicates in 1-9 (As strings)
-    """
+    @staticmethod
+    def intersect(cell1, cell2):
+        """ Returns a boolean for whether two cells intersect,
+        i.e. they are in the same row, column, or box."""
 
-    # First, remove any empty spaces
-    clean_thing = [x for x in thing if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']]
+        return cell1.column == cell2.column or cell1.row == cell2.row or cell1.box == cell2.box
 
-    # Now check for duplicates
-    if len(clean_thing) == len(set(clean_thing)):
-        return True
-    else:
+    def intersecting_values(self, cell):
+        """ Returns a list of values that intersect a given cell,
+        i.e. the values that appear in the same column, row or box.
+        """
+
+        return [other_cell.value for other_cell in self.cells.values() if self.intersect(cell, other_cell)]
+
+    def update_poss(self):
+        """
+        Updates all lists of possibilities for blank cells with new information in the sudoku.
+        """
+
+        for cell in self.blanks:
+            for poss in cell.poss[:]:  # Here we iterate over a copy, so we don't have issues with modifying inplace.
+                if poss in self.intersecting_values(cell):
+                    cell.poss.remove(poss)
+
+    def update_region_blanks(self):
+        """ Updates self.column_blanks, self.row_blanks, and self.box_blanks by removing any cells which are
+        no longer blank."""
+        for region in self.region_list:
+            for element in getattr(self, region):
+                for cell in element[:]:  # Here we iterate over a copy, so we don't have issues with modifying inplace.
+                    if cell.value != 0:
+                        element.remove(cell)
+
+    @staticmethod
+    def same_region(cell1, cell2, region):
+        """ Returns a boolean for whether two cells are in the same region given, i.e. same column, row, or box."""
+        return getattr(cell1, region) == getattr(cell2, region)
+
+    def intersecting_blank_cells(self, cell, region):
+        """ Returns a list of cells with intersect the given cell, in the given region, OTHER THAN the given cell.
+        i.e. They are in the same row, column, or box."""
+
+        return [other_cell for other_cell in self.blanks if other_cell != cell and self.same_region(cell, other_cell)]
+
+    def generate_other_blanks(self, cell):
+        """Returns blanks in OTHER cells in the same column, row, and box, as a list of lists."""
+
+        return [self.intersecting_blank_cells(cell, region) for region in self.region_list]
+
+    @staticmethod
+    def check_no_dupes(region, i):
+        """
+        Returns true if the ith region (column, row, or box) has no duplicate values, else false.
+        """
+
+        # First, remove any 0s, which are placeholders for unknowns
+        clean_region = [cell.value for cell in region[i] if cell.value != 0]
+
+        # Now check for duplicates. Return True if there were no duplicates, else False.
+        return len(clean_region) == len(set(clean_region))
+
+    @staticmethod
+    def extract_possibilities(list_of_cells):
+        """ Returns a set of all possibilities on a given iterable of cells."""
+        return set(poss for cell in list_of_cells for poss in cell.poss)
+
+    # =============================================================================
+    # STRATEGY FUNCTIONS
+    # =============================================================================
+
+    def naked_single(self):
+        """
+        Fill in a blank if there is only a single possibility.
+        """
+
+        for i, cell in enumerate(self.blanks):
+            if len(cell.poss) == 1:  # Check whether there is a single possibility in a given blank cell
+                cell.value = cell.poss[0]  # If so, update the puzzle
+                del self.blanks[i]  # Delete that entry in the blanks
+                return True  # Note that progress has been made this loop
         return False
 
+    def hidden_single(self):
+        """
+        Fill in when there is only one remaining place for a number in a row,
+        column, or box.
+        """
 
-def box_num(i, j):
-    """
-    # Find what number box a cell is in (0 - 8)
-    """
+        for cell in self.blanks:
+            # Generate the subset of blanks that are in the same column, row, or box as our current blank
+            blank_column, blank_row, blank_box = self.generate_other_blanks(cell)
 
-    # box x coordinate
-    x = i // 3 * 3
-    # box y coordinate
-    y = j // 3 * 3
+            # Extract the possible numbers from the intersecting regions
+            other_column_poss = self.extract_possibilities(blank_column)
+            other_row_poss = self.extract_possibilities(blank_row)
+            other_box_poss = self.extract_possibilities(blank_box)
 
-    if (x, y) == (0, 0):
-        return 0
-    elif (x, y) == (0, 3):
-        return 1
-    elif (x, y) == (0, 6):
-        return 2
-    elif (x, y) == (3, 0):
-        return 3
-    elif (x, y) == (3, 3):
-        return 4
-    elif (x, y) == (3, 6):
-        return 5
-    elif (x, y) == (6, 0):
-        return 6
-    elif (x, y) == (6, 3):
-        return 7
-    elif (x, y) == (6, 6):
-        return 8
+            # If one of the possibilities is the only occurrence in a given region, fill it in,
+            # and remove that cell from blanks list
+            for poss in cell.poss:
+                if poss not in other_column_poss or poss not in other_row_poss or poss not in other_box_poss:
+                    cell.value = poss
+                    self.blanks.remove(cell)
+                    return True
+        return False
 
+# TODO: All these functions
 
-def update_blanks(blanks, sudoku):
-    """
-    Updates all blanks with new information in the sudoku
-    """
+    def region_blanks(self, region):
+        """ Returns a list of lists of all blank cells in a given region (column, row, or box)."""
 
-    for blank in blanks:
-        for poss in blank[3][:]:
-            if (poss in sudoku.column(blank[1], blank[2]) or
-                    poss in sudoku.row(blank[1], blank[2]) or
-                    poss in sudoku.box(blank[1], blank[2])):
-                blank[3].remove(poss)
+        return []
 
+    def remove_from_other_cells(self, list_of_cells, region, i):
+        """ This function removes a set of numbers from the possibilities of cells in a given region
+        at a given index i OTHER than the given cells.
 
-def generate_blanks(sudoku):
-    """
-    Generates a list with the following information:
-    1) cell (i, j) attribute of grid object
-    2) cell x coordinate (i)
-    3) cell y coordinate (j)
-    4) list of possible candidates for cell (i, j)
-    """
-    blanks = []
-    for i in range(9):
-        for j in range(9):
-            if sudoku.cells[i][j] not in (
-                    ['1', '2', '3', '4', '5', '6', '7', '8', '9']):
+        """
+        for cell in self.blanks:
+            pass
 
-                poss = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-                real_poss = []
-
-                for x in poss:
-                    if not (x in sudoku.column(i, j) or x in sudoku.row(i, j)
-                            or x in sudoku.box(i, j)):
-                        real_poss.append(x)
-
-                blanks.append([sudoku.cells[i][j], i, j, real_poss])
-    return blanks
+    def reduce_cells():
+        """ This function reduces a set of cells to only the possibilities they contain from a given set of numbers.
 
 
-def generate_other_blanks(blank, blanks):
-    """Returns blanks in OTHER cells in the same column, region, and box"""
-    return ([other_blank for other_blank in blanks if other_blank[2] == blank[2] and other_blank != blank],
-            [other_blank for other_blank in blanks if other_blank[1] == blank[1] and other_blank != blank],
-            [other_blank for other_blank in blanks if
-             int(other_blank[1]) // 3 == int(blank[1]) // 3 and
-             int(other_blank[2]) // 3 == int(blank[2]) // 3 and
-             other_blank != blank])
+        Returns:
+
+        """
+        for blank in column:
+            if blank not in subset_quad:
+                for poss in blank[3][:]:
+                    if poss in quad:
+                        blank[3].remove(poss)
+                        return True
+        pass
+
+
+
+
+
+    def check_for_naked_set(self, region_blanks, n):
+        """Returns whether there is a naked set of size n in a given region, and if so, that set of numbers"""
+        for region in region_blanks:
+            all_poss = self.extract_possibilities(region)
+            for comb in it.combinations(all_poss, n):
+                potential_naked_set = [cell for cell in region if set(cell.poss).issubset(set(comb))]
+                if len(potential_naked_set) == n:
+                    return True, potential_naked_set
+        return False, []
+
+
+
+
+    def general_naked(n: int, region_blanks: list) -> bool:
+        """ Performs the logic of naked single, double, or triple for a given region.
+
+        Logic - Check whether there is a set of n numbers that are the only
+
+        Args:
+            n (int):
+            region_blanks:
+
+        Returns:
+            bool: True if this technique yielded progress in the puzzle, else false.
+        """
+        for region in self.region_list:
+            success, naked_set = self.check_for_naked_set(region, n):
+            if success:
+                reduce_cells(naked_set, stuff)
+                return True
+            return False
+
+    def general_hidden():
+        """This will execute a hidden pair, triple, or quad for a given region"""
+        pass
+
 
 
 # =============================================================================
 # STRATEGIES    
 # =============================================================================
 
-def naked_single(blanks, sudoku):
-    """
-    Fill in a blank if there is only a single possibility
-    """
-
-    for i in range(len(blanks)):
-        if len(blanks[i][3]) == 1:
-            # Update the puzzle
-            sudoku.cells[blanks[i][1]][blanks[i][2]] = blanks[i][3][0]
-            # Delete that entry in the blanks
-            del blanks[i]
-            # Note that progress has been made this loop
-            return True
-    return False
 
 
-def hidden_single(blanks, sudoku):
-    """
-    Fill in when there is only one remaining place for a number in a row, 
-    column, or box.
-    """
 
-    # For each blank:
-    # 1) for each possibility
-    # 2) look in it's row. Is there any other cell which is blank and
-    # has that possibility? If not, fill it in
-    # 3) Look in it's column. Is there any other cell which is blank and
-    # has that possibility? If not, fill it in
-    # 4) Look in it's box. Is there any other cell which is blank and
-    # has that possibility? If not, fill it in
-    for blank in blanks:
-        # generate the subset of blanks that are in the same column, row, 
-        # or box as our current blank
-        blank_column, blank_row, blank_box = generate_other_blanks(blank, blanks)
 
-        # Iterate through each possibility. See if it is the only 
-        other_column_poss = {num for other_poss in blank_column for
-                             num in other_poss[3]}
-        other_row_poss = {num for other_poss in blank_row for
-                          num in other_poss[3]}
-        other_box_poss = {num for other_poss in blank_box for
-                          num in other_poss[3]}
-
-        for poss in blank[3]:
-            if not (poss in other_column_poss and poss in other_row_poss and poss in other_box_poss):
-                sudoku.cells[blank[1]][blank[2]] = poss
-                blanks.remove(blank)
-                return True
-    return False
 
 
 def naked_double(blanks):
@@ -645,7 +724,7 @@ class Solver:
 
     def __init__(self, puzzle):
         self.start_time = time.time()
-        self.string = puzzle
+        self.unsolved = puzzle
         self.sudoku = Grid(puzzle)
         self.i = 0
         self.count = 0
@@ -654,7 +733,7 @@ class Solver:
 
     def begin_puzzle(self):
         print(f'Here is the {self.type} solution result:')
-        print(self.string)
+        print(self.unsolved)
         self.sudoku.display()
 
     def finish_puzzle(self):
@@ -719,6 +798,7 @@ class BruteForce(Solver):
                 self.blanks[self.i][0] = str(int(self.blanks[self.i][0]) + 1)
                 self.sudoku.cells[self.blanks[self.i][1]][self.blanks[self.i][2]] = self.blanks[self.i][0]
 
+            # TODO I've changed the check function to check_dupes, and made other changes. So fix this.
             # Now we check for consistency.
             # If we are consistent, we'll step forward.
             # If not, we'll run through this same spot again.
@@ -795,7 +875,8 @@ class LimitedBruteForce(BruteForce):
 
 
 class StrategySolve(LimitedBruteForce):
-    """This solver applies the 9 strategies I've programmes above, then finishes with limited brute force if necessary"""
+    """This solver applies the 9 strategies I've programmed above,
+    then finishes with limited brute force if necessary"""
 
     def __init__(self, puzzle):
         super().__init__(puzzle)
@@ -833,7 +914,8 @@ class StrategySolve(LimitedBruteForce):
         while self.progress:
 
             self.prog1 = naked_single(self.blanks, self.sudoku)
-            update_blanks(self.blanks, self.sudoku)
+            update_poss(self.blanks, self.sudoku)
+            update_region_blanks
             self.progress = self.prog1
             self.ns_count += self.prog1
 
@@ -894,3 +976,33 @@ def full_solve(puzzle):
     """
 
     return [BruteForce(puzzle).solve_bf(), LimitedBruteForce(puzzle).solve_lbf(), StrategySolve(puzzle).solve()]
+
+
+# Demo
+
+def dump(obj):
+    for attr in obj.__dict__:
+        print(f'obj.{attr} = {getattr(obj, attr)}')
+
+
+if __name__ == '__main__':
+    puzzle = '900050000200630005006002000003100070000020900080005000000800100500010004000060008'
+    sudoku = Grid(puzzle)
+
+    # dump(object1)
+    #
+    # for i, box in enumerate(object1.boxes):
+    #
+    #     print(f'\n\nBox Number {i}\n\n')
+    #     for cell in box:
+    #         dump(cell)
+    #         print('')
+    #
+    # print(object1.stringify())
+
+    sudoku.display()
+    sudoku.display_grid()
+
+    print(sudoku.cells[(0, 0)].poss)
+    sudoku.update_poss()
+    print(sudoku.cells[(0, 0)].poss)
