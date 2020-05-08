@@ -1,5 +1,5 @@
 # %%
-import sudoku_solving_algorithms2 as solvers
+import sudoku_solving_algorithms as solvers
 import pandas as pd
 
 """ 
@@ -22,14 +22,15 @@ def analyze(benchmark_set, output_filename):
     """
 
     benchmark_result_df = pd.DataFrame(columns=[
+        'description',
         'input',
         'output',
-        'bf_time',
-        'lbf_time',
+        # 'bf_time',
+        # 'lbf_time',
         'solve_time',
-        'bf_loops',
-        'lbf_loops',
-        'solve_loops',
+        # 'bf_loops',
+        # 'lbf_loops',
+        'strat_loops',
         'ns_count',
         'hs_count',
         'nd_count',
@@ -41,43 +42,45 @@ def analyze(benchmark_set, output_filename):
         'r_count'])
 
     for i, puzzle in enumerate(benchmark_set, 1):
-        bf = solvers.BruteForce(puzzle)
-        bf.solve_bf()
+        # bf = solvers.BruteForce(puzzle)
+        # bf.solve()
 
-        lbf = solvers.LimitedBruteForce(puzzle)
-        lbf.solve_lbf()
+        # lbf = solvers.LimitedBruteForce(puzzle)
+        # lbf.solve()
 
-        solve = solvers.StrategySolve(puzzle)
-        solve.solve()
+        strat = solvers.StrategySolve(puzzle)
+        strat.solve()
 
         benchmark_result_df = benchmark_result_df.append(pd.Series([
-            solve.puzzle,
-            solve.solution,
-            bf.total_time,
-            lbf.total_time,
-            solve.total_time,
-            bf.count,
-            lbf.count,
-            solve.count,
-            solve.ns_count,
-            solve.hs_count,
-            solve.nd_count,
-            solve.hd_count,
-            solve.nt_count,
-            solve.ht_count,
-            solve.nq_count,
-            solve.hq_count,
-            solve.r_count], index=benchmark_result_df.columns),
+            strat.sudoku.description,
+            strat.sudoku.input,
+            strat.sudoku.output,
+            # bf.total_time,
+            # lbf.total_time,
+            strat.total_time,
+            # bf.count,
+            # lbf.count,
+            strat.count,
+            strat.sudoku.strategy_counts['ns'],
+            strat.sudoku.strategy_counts['hs'],
+            strat.sudoku.strategy_counts['nd'],
+            strat.sudoku.strategy_counts['hd'],
+            strat.sudoku.strategy_counts['nt'],
+            strat.sudoku.strategy_counts['ht'],
+            strat.sudoku.strategy_counts['nq'],
+            strat.sudoku.strategy_counts['hq'],
+            strat.sudoku.strategy_counts['r']], index=benchmark_result_df.columns),
             ignore_index=True)
 
-        print(f'{output_filename}: puzzle #{i}: time = {bf.total_time}, {lbf.total_time}, {solve.total_time}')
-    benchmark_result_df.to_csv(f'{filepath}{output_filename}.csv')
+        print(f'''{output_filename}: puzzle #{i}: time = {strat.total_time}, {strat.total_time}, {strat.total_time}''')
+    benchmark_result_df.to_csv(f'{filepath}{output_filename}.csv', index=False)
+
 
 # Benchmark 0: Freeman custom benchmark, shows off various strats
-
+# freeman_benchmark_set = pd.read_csv(f'{filepath}freeman_benchmark_set')
 
 # Benchmark 1: Kaggle (1 Million, Very Easy)
-kaggle_benchmark_set = pd.read_csv(f'{filepath}kaggle_benchmark_set.csv')['quizzes']
+kaggle_benchmark_set = pd.read_csv(f'{filepath}kaggle_benchmark_set.csv').iloc[:100, 0]
 
 # Benchmark 2: Minimum Clues (49158 , Easy)
 minclue_benchmark_set = pd.read_csv(f'{filepath}sudoku17.txt').iloc[:50, 0]
@@ -92,8 +95,9 @@ hardest_benchmark_set = hardest_benchmark_set['sudoku']
 # %%
 
 benchmarks = [
-    (kaggle_benchmark_set, 'kaggle_results'),
-    # (minclue_benchmark_set, 'minclue_results_50'),
+    # (freeman_benchmark_set, 'freeman_results'),
+    # (kaggle_benchmark_set, 'kaggle_results'),
+    (minclue_benchmark_set, 'minclue_results_50'),
     # (magictour_benchmark_set, 'magictour_results'),
     # (hardest_benchmark_set, 'hardest_benchmark_results')
 ]
