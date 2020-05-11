@@ -895,4 +895,4 @@ if __name__ == '__main__':
 # POSTSCRIPT
 # =============================================================================
 
-# This code is dedicated to Megan, who will always be better than me at Sudoku.
+# For Megan, who will always be better than me at Sudoku.
