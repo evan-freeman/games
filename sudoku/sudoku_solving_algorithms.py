@@ -15,12 +15,15 @@ Conventions:
 3) Two cells are said to "intersect" if they appear in the same column, row, or box.
 
 
-TODO
-1) Add error handling.
-
-
 Upcoming Features
-1) Contradiction Depth
+1) More Strategies
+2) More Statistics:
+    - Contradiction Depth
+    - Amount of backtracking for brute force
+3) Generalize to nxn
+4) Accept int as well as str for input
+    - This is simple, just pad front with zeros if the input is too short
+5) Error handling
 """
 
 import time
