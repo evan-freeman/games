@@ -14,7 +14,8 @@ strategies to use?
 - NN
 
 
-Note: I'm enforcing strict turn order. Technically all white's are taken first, THEN a colored may be taken.
+Note: I'm enforcing strict turn order. Technically all white's are taken first, beginning with the active player,
+    THEN a colored pair may be taken by the active player.
 
 
 """
