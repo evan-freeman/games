@@ -20,6 +20,7 @@ Note: I'm enforcing strict turn order. Technically all white's are taken first, 
 """
 
 import numpy as np
+import pandas as pd
 
 """"
 Stuff I need
