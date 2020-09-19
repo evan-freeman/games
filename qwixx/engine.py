@@ -112,7 +112,7 @@ class Qwixx:
 
     @property
     def game_over(self):
-        return self.total_penalties >= 4 or self.total_locked >= 2
+        return np.any(player.penalties >= 4 for player in self.players) or self.total_locked >= 2
 
     def move(self, name, color, num):
         """ This is how a player takes their move. """
