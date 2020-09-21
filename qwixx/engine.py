@@ -56,14 +56,14 @@ class Scoreboard:
     def __init__(self, name: str):
         self.name = name
         self.range = range(1, 13)
-        self.colors = {color: {num: 'blank' for num in self.range} for color in color_list}
+        self.colors = {color: {num: 'b' for num in self.range} for color in color_list}
         self.penalties = 0
         self.score_conversion = {x: x * (x + 1) // 2 for x in range(13)}
 
     def display(self):
         print()
         for color in self.colors:
-            print(f'{color}: {self.colors[color]}')
+            print(f'{color}:\t{self.colors[color]}')
         print(f'penalties: {self.penalties}')
         print()
 
@@ -116,8 +116,17 @@ class Qwixx:
 
     def move(self, name, color, num):
         """ This is how a player takes their move. """
-        self.players[name].colors[color][num] = 'x'
-        # TODO Update the rest of the board
+        if self.players[name].colors[color][num] == 'x':
+            print('Illegal move: Square is already marked!')
+        elif self.players[name].colors[color][num] == '-':
+            print('Illegal move: Square is blocked by an x!')
+        elif self.players[name].colors[color][num] == 'b':
+            self.players[name].colors[color][num] = 'x'
+            for other_num in self.players[name].colors[color]:
+                other_num_is_below_num = other_num < num if color in ('red', 'yellow') else other_num > num
+                other_num_square_is_blank = (self.players[name].colors[color][other_num] == 'b')
+                if other_num_square_is_blank and other_num_is_below_num:
+                    self.players[name].colors[color][other_num] = '-'
 
     # def request_move(self, STUFF):
 
@@ -160,10 +169,10 @@ class Qwixx:
 
     def display_scores(self):
         for name in self.players:
-            print(f'{name}: {self.players[name].color_scores} {self.players[name].score}')
+            print(f'{name}:\t{self.players[name].color_scores} total_score: {self.players[name].score}')
 
     # THIS IS THE GAME ENGINE
-    def begin(self):
+    def begin_game(self):
         print('THE GAME HAS BEGUN!')
         self.determine_starting_player()
         while not self.game_over:
@@ -197,6 +206,7 @@ if __name__ == '__main__':
     game.display_scores()
     game.display_all_boards()
     game.move('Evan', 'red', 5)
+    game.display_all_boards()
     game.move('Evan', 'red', 6)
     game.display_all_boards()
     game.display_scores()
