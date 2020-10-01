@@ -138,9 +138,9 @@ class Qwixx:
         done = False
         while not done:
             for player in self.turn_order:
-            color = input(f'{name}, please select a color: ')
-            num = input(f'{name}, please select a number: ')
-            done = self.move(name, color, num)
+                color = input(f'{player}, please select a color: ')
+                num = input(f'{player}, please select a number: ')
+                done = self.move(player, color, num)
 
     def determine_starting_player(self):
         pass
