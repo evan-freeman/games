@@ -84,6 +84,7 @@ class Qwixx:
         self.dice_list = [('white', 0)] + [('white', 1)] + list((color, 0) for color in color_list)
         self.dice = {die: Die(*die) for die in self.dice_list}
         self.players = {name: Scoreboard(name) for name in names}
+        self.turn_order = names
         self.locked = {color: False for color in color_list}
         self.last_move = None
 
@@ -112,14 +113,16 @@ class Qwixx:
 
     @property
     def game_over(self):
-        return np.any(player.penalties >= 4 for player in self.players) or self.total_locked >= 2
+        return np.any([self.players[player].penalties >= 4 for player in self.players]) or self.total_locked >= 2
 
     def move(self, name, color, num):
         """ This is how a player takes their move. """
         if self.players[name].colors[color][num] == 'x':
             print('Illegal move: Square is already marked!')
+            return False
         elif self.players[name].colors[color][num] == '-':
             print('Illegal move: Square is blocked by an x!')
+            return False
         elif self.players[name].colors[color][num] == 'b':
             self.players[name].colors[color][num] = 'x'
             for other_num in self.players[name].colors[color]:
@@ -127,8 +130,17 @@ class Qwixx:
                 other_num_square_is_blank = (self.players[name].colors[color][other_num] == 'b')
                 if other_num_square_is_blank and other_num_is_below_num:
                     self.players[name].colors[color][other_num] = '-'
+            return True
+    
+## TODO: Finish prompt all players.
 
-    # def request_move(self, STUFF):
+    def prompt_all_players(self, active_player):
+        done = False
+        while not done:
+            for player in self.turn_order:
+            color = input(f'{name}, please select a color: ')
+            num = input(f'{name}, please select a number: ')
+            done = self.move(name, color, num)
 
     def determine_starting_player(self):
         pass
@@ -139,8 +151,11 @@ class Qwixx:
         print()
         print('DICE')
         for die in self.dice.values():
-            print(f'{die.color}{" " + str(die.num) if die.color == "white" else ""}: {die.value}', end=' | ')
-            print()
+            if die.color == 'white':
+                print(f'{die.color}{" " + str(die.num)}:\t{die.value}')
+            else:
+                print(f'{die.color}:\t\t{die.value}')
+        print()
 
     def display_boards(self, name):
         print()
@@ -178,8 +193,10 @@ class Qwixx:
         while not self.game_over:
             self.roll_dice()
             self.display_dice()
-            for name in self.players:
-                pass
+            self.display_poss()
+            self.display_all_boards()
+            for name in self.turn_order:
+                self.prompt_all_players(name)
 
         print('THE GAME IS OVER!')
         self.display_scores()
@@ -194,19 +211,14 @@ if __name__ == '__main__':
 
 
     game = Qwixx(['Evan', 'Megan'])
-    # for i in range(5):
-    #     game.roll_dice()
-    #     game.display_dice()
-    #     print()
-    #     game.display_poss()
+    game.begin_game()
 
+
+
+    # game.display_scores()
     # game.display_all_boards()
-    # print(game.game_over)
-
-    game.display_scores()
-    game.display_all_boards()
-    game.move('Evan', 'red', 5)
-    game.display_all_boards()
-    game.move('Evan', 'red', 6)
-    game.display_all_boards()
-    game.display_scores()
+    # game.move('Evan', 'red', 5)
+    # game.display_all_boards()
+    # game.move('Evan', 'red', 6)
+    # game.display_all_boards()
+    # game.display_scores()
